@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PDF 二维码提取工具 · 开发者手册</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --panel:#fff; --line:#e3e8ef; --text:#1f2933; --sub:#6b7685;
+    --accent:#2f6fed; --accent-soft:#eef4ff; --ok:#1f9d55; --ok-soft:#eaf7ef;
+    --warn:#d98300; --warn-soft:#fff8eb; --danger:#e5484d; --danger-soft:#fdecec;
+    --code-bg:#1e2733; --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+    background:var(--bg); color:var(--text); font-size:15px; line-height:1.8;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px 60px}
+
+  .hero{
+    background:linear-gradient(180deg,#1e2733 0%,#2b3a4d 100%);
+    color:#e6edf3; padding:46px 20px 40px; text-align:center; margin-bottom:28px;
+  }
+  .hero h1{font-size:27px;margin:0 0 10px;font-weight:600;letter-spacing:.5px}
+  .hero .sub{font-size:14px;opacity:.75;margin:0}
+  .hero .chips{margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .hero .chip{
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+    padding:4px 12px; border-radius:20px; font-size:12.5px;
+  }
+
+  .toc{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 22px; margin-bottom:28px;
+  }
+  .toc h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.5px}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:32px}
+  .toc li{margin:4px 0;font-size:14px}
+  .toc a{color:var(--accent);text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+  @media(max-width:640px){ .toc ol{columns:1} }
+
+  section{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px 30px; margin-bottom:22px;
+  }
+  section > h2{
+    font-size:20px; margin:0 0 18px; padding-bottom:12px;
+    border-bottom:2px solid var(--accent-soft); font-weight:600;
+  }
+  section > h2 .num{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:32px; height:28px; padding:0 7px; border-radius:8px; background:var(--accent);
+    color:#fff; font-size:13.5px; margin-right:10px; vertical-align:2px;
+  }
+  h3{font-size:16.5px;margin:28px 0 10px;font-weight:600;color:#243b53}
+  h3:first-of-type{margin-top:6px}
+  h4{font-size:14.5px;margin:20px 0 8px;font-weight:600;color:#334e68}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0;padding-left:26px}
+  li{margin:6px 0}
+  code{
+    background:#eef2f8; border:1px solid #dde4ee; border-radius:5px;
+    padding:1px 6px; font-family:Consolas,"Courier New",monospace; font-size:13.5px;
+    color:#2257c4;
+  }
+  b,strong{color:#1a2b3c}
+
+  pre{
+    background:var(--code-bg); color:#d7e3ef; border-radius:10px; padding:16px 18px;
+    overflow-x:auto; font-family:Consolas,"Courier New",monospace; font-size:13px;
+    line-height:1.7; margin:14px 0;
+  }
+  pre code{background:none;border:0;padding:0;color:inherit;font-size:inherit}
+  pre .c{color:#7d8fa4}        /* 注释 */
+  pre .k{color:#8ab4f8}        /* 关键字 */
+  pre .s{color:#9ccc84}        /* 字符串 */
+  pre .n{color:#f0a04b}        /* 数字 */
+
+  .tip,.warn,.danger,.ok{
+    border-radius:10px; padding:13px 16px; margin:14px 0; font-size:14px; border:1px solid;
+  }
+  .tip{background:var(--accent-soft); border-color:#cfe0ff;}
+  .ok{background:var(--ok-soft); border-color:#c6ebd7;}
+  .warn{background:var(--warn-soft); border-color:#f5e0b8;}
+  .danger{background:var(--danger-soft); border-color:#f7cdd0;}
+  .tip .t,.warn .t,.danger .t,.ok .t{font-weight:600;margin-right:6px}
+
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:14px}
+  th,td{border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top}
+  th{background:#f2f6fc; font-weight:600; color:#243b53; white-space:nowrap}
+  tbody tr:nth-child(even){background:#fafbfd}
+  td code{font-size:13px}
+
+  /* 流程条 */
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0}
+  .flow .box{
+    background:#f2f6fc;border:1px solid #d5e2f5;border-radius:8px;padding:8px 13px;font-size:13.5px;
+  }
+  .flow .arw{color:var(--sub);font-size:15px}
+
+  /* 常量表高亮 */
+  .kv td:first-child{white-space:nowrap}
+  .kv td:nth-child(2){white-space:nowrap; font-family:Consolas,monospace; color:#2257c4; font-weight:600}
+
+  details{
+    border:1px solid var(--line); border-radius:10px; margin:10px 0;
+    background:#fafbfd; overflow:hidden;
+  }
+  details summary{
+    padding:12px 16px; cursor:pointer; font-weight:600; font-size:14.5px;
+    list-style:none; position:relative; padding-right:40px;
+  }
+  details summary::-webkit-details-marker{display:none}
+  details summary::after{content:"＋";position:absolute;right:16px;top:12px;color:var(--accent);font-weight:700}
+  details[open] summary::after{content:"－"}
+  details summary:hover{background:#f2f6fc}
+  details .ans{padding:12px 16px 14px; font-size:14px; color:#425466; border-top:1px dashed var(--line)}
+  details .ans pre{margin:10px 0}
+
+  .page-footer{
+    margin-top:34px; padding:20px 10px 6px; border-top:1px solid var(--line);
+    text-align:center; font-size:12.5px; color:var(--sub); line-height:2;
+  }
+  .page-footer .ver{color:var(--accent);font-weight:600}
+  .page-footer a{color:var(--accent);text-decoration:none}
+  .page-footer a:hover{text-decoration:underline}
+  .page-footer .gh{display:inline-block;margin-top:4px}
+
+  @media(max-width:640px){
+    body{font-size:14.5px}
+    section{padding:20px 18px}
+    .hero{padding:32px 16px 28px}
+    .hero h1{font-size:22px}
+    pre{font-size:12px;padding:12px}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>PDF 二维码提取工具 · 开发者手册</h1>
+  <p class="sub">单文件离线架构 · 码眼定位 · Web Worker 多核并行 · 零依赖 ZIP</p>
+  <div class="chips">
+    <span class="chip">pdfjs-dist 3.11.174</span>
+    <span class="chip">zxing-wasm 3.0.2</span>
+    <span class="chip">单 HTML · 4.10 MB</span>
+    <span class="chip">Ver 1.1</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="toc">
+    <h2>目录</h2>
+    <ol>
+      <li><a href="#c1">项目概览</a></li>
+      <li><a href="#c2">设计原则与硬约束</a></li>
+      <li><a href="#c3">文件结构与代码分区</a></li>
+      <li><a href="#c4">运行时数据模型</a></li>
+      <li><a href="#c5">主流水线：单页三段式</a></li>
+      <li><a href="#c6">检测引擎：三尺度自适应</a></li>
+      <li><a href="#c7">Web Worker 检测池</a></li>
+      <li><a href="#c8">码眼定位与正方形裁切</a></li>
+      <li><a href="#c9">命名与排序模型</a></li>
+      <li><a href="#c10">零依赖 ZIP 打包器</a></li>
+      <li><a href="#c11">UI 与交互层</a></li>
+      <li><a href="#c12">容错与缺陷修复记录</a></li>
+      <li><a href="#c13">性能特征与调优</a></li>
+      <li><a href="#c14">兼容性矩阵</a></li>
+      <li><a href="#c15">构建与离线打包流程</a></li>
+      <li><a href="#c16">扩展指南</a></li>
+      <li><a href="#c17">调试与自测清单</a></li>
+      <li><a href="#c18">版本与联系</a></li>
+    </ol>
+  </div>
+
+  <!-- 1 -->
+  <section id="c1">
+    <h2><span class="num">1</span>项目概览</h2>
+
+    <h3>它做什么</h3>
+    <p>输入一份 PDF，输出一个 ZIP，里面是 PDF 中所有二维码被裁成的正方形 JPG。整个过程完全在浏览器内完成，零网络请求。</p>
+
+    <h3>技术选型</h3>
+    <table class="kv">
+      <thead><tr><th>层</th><th>方案</th><th>为什么</th></tr></thead>
+      <tbody>
+        <tr><td>PDF 解析与渲染</td><td>pdfjs-dist 3.11.174</td><td>业界事实标准，API 稳定，支持 canvas 渲染</td></tr>
+        <tr><td>二维码识别</td><td>zxing-wasm 3.0.2</td><td>WASM 版 ZXing，性能远超纯 JS 实现，且能返回码眼四点坐标</td></tr>
+        <tr><td>并行执行</td><td>原生 Web Worker 池</td><td>检测是纯 CPU 密集计算，必须离开主线程，否则 UI 冻结</td></tr>
+        <tr><td>ZIP 打包</td><td>自实现（约 60 行）</td><td>避免引入 JSZip 等依赖（体积 + 复杂度），格式简单可控</td></tr>
+        <tr><td>图片编码</td><td>Canvas <code>toBlob('image/jpeg')</code></td><td>浏览器原生，无需编码库</td></tr>
+        <tr><td>UI</td><td>原生 DOM + CSS，无框架</td><td>单文件约束下，框架的构建链代价过高</td></tr>
+      </tbody>
+    </table>
+
+    <h3>为什么是"单文件"</h3>
+    <p>目标场景是"发给别人用"。单文件意味着：不用装 Node、不用起服务、不用配 CORS、可以放 U 盘、可以走邮件附件、断网可用。代价是所有依赖必须内联（pdf.js worker 用 <code>&lt;script type="text/plain"&gt;</code> 藏，zxing-wasm 用 base64 塞进 Worker 模板字符串）。</p>
+
+    <div class="flow">
+      <span class="box">PDF 文件</span><span class="arw">→</span>
+      <span class="box">pdf.js 渲染成 canvas（300 DPI）</span><span class="arw">→</span>
+      <span class="box">降采样到 ≤1800px 检测图</span><span class="arw">→</span>
+      <span class="box">Worker 池 zxing 识别码眼</span><span class="arw">→</span>
+      <span class="box">坐标回映射原图</span><span class="arw">→</span>
+      <span class="box">按码眼裁正方形</span><span class="arw">→</span>
+      <span class="box">JPG 编码</span><span class="arw">→</span>
+      <span class="box">自实现 ZIP 打包</span><span class="arw">→</span>
+      <span class="box">下载</span>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="c2">
+    <h2><span class="num">2</span>设计原则与硬约束</h2>
+
+    <h3>五条不可违反的约束</h3>
+    <table>
+      <thead><tr><th>#</th><th>约束</th><th>原因</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><strong>单文件红线</strong><br>交付产物必须是<strong>一个</strong> <code>.html</code>，不能有外链 JS/CSS/WASM/字体/图片</td>
+          <td>离线可用 + 可邮件传递。任何 <code>https://</code> 外链都会破坏这一承诺</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><strong>Worker 代码必须模板字符串安全</strong><br>Worker 源码整体存在 JS 模板字符串 <code>WORKER_SRC</code> 里</td>
+          <td>模板字符串内不能出现裸的反引号和 <code>${</code>，否则提前闭合。WASM base64 需按行拼接</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><strong>命名必须按页序归位</strong><br>不能"谁先处理完谁先编号"</td>
+          <td>并行执行完成顺序随机。必须用 <code>pageResults[页码]</code> 暂存，最后按页序遍历合并</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><strong>离线校验零外链</strong><br>发布前必须验证文件内没有 <code>https://</code> 形式的资源引用残留</td>
+          <td>zxing 的 <code>locateFile</code> 默认指向 jsdelivr CDN，必须重写为本地 blob/内联</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><strong>体积预算 ≤10 MB</strong><br>当前 4.10 MB</td>
+          <td>邮件附件、聊天工具的常见限制。超出需重新评估内联策略</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="danger">
+      <span class="t">⛔ 最容易踩的坑</span>
+      <strong>约束 2</strong>：往 <code>WORKER_SRC</code> 里加代码时，如果新代码里写了反引号或 <code>${}</code>（比如字符串拼接、模板字面量），整个 Worker 会在创建时静默崩溃。表现出来是"检测结果永远是 0"，而不是报错。改动 Worker 代码后<strong>务必回归测试</strong>。
+    </div>
+
+    <h3>开发原则</h3>
+    <ul>
+      <li><strong>不做无谓的通用化</strong>——这是专用工具，不是库。不为"万一以后要用"增加抽象。</li>
+      <li><strong>失败要显式</strong>——宁可报错，不要静默产出空结果（见第 12 章的 S1 修复）。</li>
+      <li><strong>内存优先</strong>——大 PDF 场景下，一次多余的全页拷贝就可能导致 OOM。所有中间 canvas 用完尽快释放引用。</li>
+      <li><strong>零拷贝优先</strong>——Blob 直接拼进最终 Blob，不先转 <code>Uint8Array</code> 再转回来（见 O5 修复）。</li>
+    </ul>
+  </section>
+
+  <!-- 3 -->
+  <section id="c3">
+    <h2><span class="num">3</span>文件结构与代码分区</h2>
+
+    <p>文件约 <strong>23407 行</strong>，但 99% 是内联的第三方库。真正的业务代码只有约 700 行，集中在两个区域。</p>
+
+    <table>
+      <thead><tr><th>行号区间</th><th>内容</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>1 – 11127</td><td>pdf.js 库 + license 头</td><td>webpack UMD 打包产物，<strong>不要手改</strong></td></tr>
+        <tr><td>11128 – 11172</td><td><code>&lt;style&gt;</code></td><td>全部 UI 样式，CSS 变量集中在 <code>:root</code></td></tr>
+        <tr><td>11173 – 11196</td><td><code>&lt;script type="text/plain" id="__pdfWorkerCode"&gt;</code></td><td>pdf.js 的 worker 副本，运行时转成 Blob URL</td></tr>
+        <tr><td>11198 – 11271</td><td><code>&lt;body&gt;</code> 结构</td><td>topbar + 左 sidebar 五张卡 + 右 stage</td></tr>
+        <tr><td>11273 – 11370</td><td><strong>JS 区 A：初始化与文件加载</strong></td><td>worker 注入、DOM 引用、拖拽、toast</td></tr>
+        <tr><td>11372 – 11424</td><td><strong>JS 区 B：ZIP 打包器</strong></td><td><code>crc32()</code> + <code>buildZip()</code></td></tr>
+        <tr><td>11426 – 11438</td><td>PDF 渲染</td><td><code>renderPage(page, dpi)</code></td></tr>
+        <tr><td>11440 – 11448</td><td>注释块</td><td>记录"主线程回退检测已移除"的决定</td></tr>
+        <tr><td>11449 – 23076</td><td><code>WORKER_SRC</code> 模板字符串</td><td>zxing base64 + <code>detectPage</code> + <code>onmessage</code></td></tr>
+        <tr><td>23078 – 23166</td><td><strong>JS 区 C：DetPool</strong></td><td>Worker 池类 + <code>getDetPool()</code></td></tr>
+        <tr><td>23168 – 23187</td><td>裁切</td><td><code>cropQRSquare()</code></td></tr>
+        <tr><td>23189 – 23403</td><td><strong>JS 区 D：主流程与导出</strong></td><td><code>processBtn</code> / <code>renderResults</code> / <code>exportBtn</code></td></tr>
+        <tr><td>23405</td><td><code>&lt;footer&gt;</code></td><td>版权与版本</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip">
+      <span class="t">💡 定位技巧</span>
+      改业务代码时直接跳到 <code>11273</code> 之后。前面的 11000 行是 pdf.js，搜索业务标识符（如 <code>cropQRSquare</code>、<code>DetPool</code>）比翻行号快。
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="c4">
+    <h2><span class="num">4</span>运行时数据模型</h2>
+
+    <h3>全局状态</h3>
+    <pre><code><span class="c">// 11296 – 11298</span>
+<span class="k">let</span> currentPdf = <span class="k">null</span>;      <span class="c">// pdf.js 的 PDFDocumentProxy</span>
+<span class="k">let</span> currentFileName = <span class="s">''</span>;   <span class="c">// 去掉 .pdf 后缀的文件名，用于 ZIP 命名</span>
+<span class="k">let</span> results = [];             <span class="c">// 扁平化后的结果数组，顺序即最终编号顺序</span></code></pre>
+
+    <h3><code>results[]</code> 元素结构</h3>
+    <table>
+      <thead><tr><th>字段</th><th>类型</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td><code>page</code></td><td>number</td><td>所在页码（1-based）</td></tr>
+        <tr><td><code>indexInPage</code></td><td>number</td><td>页内序号（1-based，按阅读顺序）</td></tr>
+        <tr><td><code>globalIdx</code></td><td>number</td><td>全局序号（0-based），用于名字兜底</td></tr>
+        <tr><td><code>canvas</code></td><td>HTMLCanvasElement</td><td>裁好的正方形图，导出时 <code>toBlob</code></td></tr>
+        <tr><td><code>name</code></td><td>string</td><td>当前文件名（含 <code>.jpg</code>），用户可改</td></tr>
+        <tr><td><code>qr</code></td><td>object</td><td>原始检测结果，含 <code>cx/cy/side/data/scale</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>匹配对象的坐标契约</h3>
+    <p>检测结果在 Worker 内产生，坐标基于<strong>降采样后的检测图</strong>。回到主线程后必须乘以 <code>invScale</code> 映射回<strong>原始渲染 canvas</strong>。</p>
+
+    <pre><code><span class="c">// Worker 内 parse() 输出（23017）—— 已除以放大倍数 f</span>
+{cx, cy, side, minX, maxX, minY, maxY, data}
+
+<span class="c">// 主线程还原（23248 – 23252）—— 乘以 invScale = canvas.width / detW</span>
+<span class="k">const</span> qrs = found.map(m =&gt; ({
+  cx: m.cx * invScale, cy: m.cy * invScale, side: m.side * invScale,
+  minX: m.minX * invScale, <span class="c">/* ... */</span>
+  data: m.data, scale: m.scale
+}));</code></pre>
+
+    <div class="warn">
+      <span class="t">⚠️ 两套缩放别搞混</span>
+      Worker 内部有<strong>升采样倍数</strong> <code>f</code>（1 / 2 / 3，用于放大检测）；主线程有<strong>降采样倒数</strong> <code>invScale</code>（把 300 DPI 大图缩到 1800px 的倒数）。两者方向相反，相乘后才是"原始 canvas 坐标"。改代码时务必分清。
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section id="c5">
+    <h2><span class="num">5</span>主流水线：单页三段式</h2>
+
+    <p>核心函数 <code>processOnePage(p)</code>（2314 – 23259）。每页依次走三步，各自计时打点。</p>
+
+    <pre><code><span class="k">async function</span> processOnePage(p){
+  <span class="k">const</span> t0 = performance.now();
+  <span class="k">const</span> page   = <span class="k">await</span> currentPdf.getPage(p);          <span class="c">// ① 取页</span>
+  <span class="k">const</span> canvas = <span class="k">await</span> renderPage(page, dpi);          <span class="c">// ② 渲染成 300 DPI canvas</span>
+  <span class="k">const</span> t1 = performance.now();
+
+  <span class="c">/* 降采样到最长边 ≤ 1800px，与导出分辨率解耦 */</span>
+  <span class="k">const</span> longSide = Math.max(canvas.width, canvas.height);
+  <span class="k">const</span> DET_LONG_MAX = <span class="n">1800</span>;
+  <span class="c">/* ... 生成 detCanvas，算出 invScale ... */</span>
+
+  <span class="k">const</span> imageData = detCanvas.getContext(<span class="s">'2d'</span>).getImageData(<span class="n">0</span>, <span class="n">0</span>, detW, detH);
+  <span class="k">const</span> pool = getDetPool();
+  <span class="k">let</span> found = <span class="k">await</span> pool.submit(imageData.data.buffer, detW, detH, mode);
+  <span class="k">const</span> t2 = performance.now();
+
+  <span class="k">const</span> qrs    = found.map(<span class="c">/* 坐标回映射 */</span>);
+  <span class="k">const</span> crops  = qrs.map(qr =&gt; ({ qr, outCanvas: cropQRSquare(canvas, qr) }));
+  pageResults[p] = crops;                                <span class="c">// ← 关键：按页码暂存</span>
+  <span class="k">const</span> t3 = performance.now();
+
+  console.log(<span class="s">'PAGE'</span>, p, <span class="s">'render'</span>, Math.round(t1-t0),
+              <span class="s">'detect'</span>, Math.round(t2-t1), <span class="s">'crop'</span>, Math.round(t3-t2),
+              <span class="s">'found'</span>, found.length, <span class="s">'detSize'</span>, detW+<span class="s">'x'</span>+detH);
+  donePages++;
+  updateProgress();
+}</code></pre>
+
+    <h3>每一步在干什么</h3>
+    <table>
+      <thead><tr><th>步骤</th><th>输入</th><th>输出</th><th>耗时特征</th></tr></thead>
+      <tbody>
+        <tr><td>① 取页</td><td>页码</td><td>PDFPageProxy</td><td>异步 I/O，很快</td></tr>
+        <tr><td>② 渲染</td><td>page + dpi</td><td>全尺寸 canvas</td><td>占大部分时间，与 DPI² 成正比</td></tr>
+        <tr><td>③ 检测</td><td>降采样 buffer</td><td>码眼坐标数组</td><td>纯 CPU，跑在 Worker，主线程不阻塞</td></tr>
+        <tr><td>④ 裁切</td><td>坐标 + 原图</td><td>小 canvas 数组</td><td>极快，仅 drawImage 一块区域</td></tr>
+      </tbody>
+    </table>
+
+    <h3>并行调度</h3>
+    <pre><code><span class="c">// 23263 – 23272</span>
+<span class="k">let</span> next = <span class="n">1</span>;
+<span class="k">const</span> failedPages = [];
+<span class="k">async function</span> worker(){
+  <span class="k">while</span>(next &lt;= totalPages){
+    <span class="k">const</span> p = next++;                       <span class="c">// 原子取号，天然防重复</span>
+    <span class="k">try</span>{ <span class="k">await</span> processOnePage(p); }
+    <span class="k">catch</span>(e){ pageResults[p] = []; failedPages.push(p); }   <span class="c">// O4：记录失败页</span>
+  }
+}
+<span class="k">await</span> Promise.all(
+  Array.from({ length: Math.min(PARALLEL, totalPages) }, worker)
+);</code></pre>
+
+    <p>用"共享递增游标 + N 个 worker"的模式做动态负载均衡——不做静态分片，因为各页耗时差异大（某页全是图，某页是纯文字），静态分片会导致长尾等待。</p>
+
+    <h3>结果合并：保证编号顺序</h3>
+    <pre><code><span class="c">// 23274 – 23283 —— 此处是"页码顺序"的唯一权威来源</span>
+<span class="k">let</span> globalIdx = <span class="n">0</span>;
+<span class="k">for</span>(<span class="k">let</span> p = <span class="n">1</span>; p &lt;= totalPages; p++){
+  <span class="k">const</span> crops = pageResults[p] || [];
+  crops.forEach((c, j) =&gt; {
+    <span class="k">const</span> seq = String(startNumber + globalIdx).padStart(<span class="n">3</span>, <span class="s">'0'</span>);
+    results.push({ page:p, indexInPage:j+<span class="n">1</span>, globalIdx:globalIdx+<span class="n">1</span>,
+                   canvas:c.outCanvas, name: seq + <span class="s">'.jpg'</span>, qr:c.qr });
+    globalIdx++;
+  });
+}</code></pre>
+
+    <div class="tip">
+      <span class="t">💡 为什么必须两阶段</span>
+      并行执行时页完成顺序是乱的（3 页可能比 1 页先完成）。如果边完成边 push，编号就乱了。所以先按页码<strong>存</strong>，再按页码<strong>取</strong>。
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="c6">
+    <h2><span class="num">6</span>检测引擎：三尺度自适应</h2>
+
+    <p>这是识别率的核心。函数 <code>detectPage(buf, w, h, mode)</code> 定义在 Worker 内（约 23032 – 23064）。</p>
+
+    <h3>常量</h3>
+    <table class="kv">
+      <thead><tr><th>常量</th><th>值</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td><code>DET_LONG_MAX</code></td><td>1800</td><td>检测图最长边上限（px），与导出分辨率解耦</td></tr>
+        <tr><td><code>MAXP</code></td><td>100000000 (1e8)</td><td>Worker 内允许的最大像素数，超限则跳过该尺度</td></tr>
+        <tr><td>去重阈值</td><td>0.6</td><td>中心距 &lt; min(side)×0.6 视为同一个码</td></tr>
+      </tbody>
+    </table>
+
+    <h3>算法骨架</h3>
+    <pre><code><span class="k">async function</span> detectPage(buf, w, h, mode){
+  <span class="k">const</span> MAXP = <span class="n">100000000</span>;
+  <span class="k">const</span> skip2x  = (mode === <span class="s">'1x'</span>);
+  <span class="k">const</span> force3x = (mode === <span class="s">'full'</span>);
+
+  <span class="c">/* ---- 第 1 轮：原尺寸 ---- */</span>
+  <span class="k">let</span> l1 = []; <span class="k">try</span>{ l1 = <span class="k">await</span> runDetect(<span class="k">new</span> Uint8ClampedArray(buf), w, h); }<span class="k">catch</span>{ l1 = []; }
+  <span class="k">const</span> a1 = parse(l1, <span class="n">1</span>);
+  <span class="k">const</span> c1x = a1.length;
+
+  <span class="c">/* ---- 第 2 轮：放大 2 倍 ---- */</span>
+  <span class="k">let</span> merged = a1, c2x = c1x, added2 = [];
+  <span class="k">if</span>(!skip2x &amp;&amp; w*h*<span class="n">4</span> &lt;= MAXP){
+    <span class="k">const</span> up = upscale(buf, w, h, <span class="n">2</span>);
+    <span class="k">let</span> l2 = []; <span class="k">try</span>{ l2 = <span class="k">await</span> runDetect(up.data, up.width, up.height); }<span class="k">catch</span>{ l2 = []; }
+    added2 = parse(l2, <span class="n">2</span>);
+    merged = dedup(a1.concat(added2));
+    c2x = merged.length;
+  }
+
+  <span class="c">/* ---- 第 3 轮：放大 3 倍（条件触发）---- */</span>
+  <span class="k">const</span> need3x = force3x
+              || (added2.length &gt; <span class="n">0</span> &amp;&amp; merged.length &gt; c1x)   <span class="c">// 2x 找到了新的</span>
+              || (c1x === <span class="n">0</span>);                                <span class="c">// M3：1x 全空，强制救援</span>
+  <span class="k">let</span> found = merged, used3x = <span class="k">false</span>, c3x = c2x;
+  <span class="k">if</span>(need3x &amp;&amp; w*h*<span class="n">9</span> &lt;= MAXP){
+    used3x = <span class="k">true</span>;
+    <span class="k">const</span> up = upscale(buf, w, h, <span class="n">3</span>);
+    <span class="k">let</span> l3 = []; <span class="k">try</span>{ l3 = <span class="k">await</span> runDetect(up.data, up.width, up.height); }<span class="k">catch</span>{ l3 = []; }
+    found = dedup(merged.concat(parse(l3, <span class="n">3</span>)));
+    c3x = found.length;
+  }
+
+  <span class="c">/* ---- 阅读顺序排序 ---- */</span>
+  found.sort(<span class="k">function</span>(a,b){
+    <span class="k">if</span>(Math.abs(a.cy-b.cy) &gt; (a.side+b.side)/<span class="n">4</span>) <span class="k">return</span> a.cy-b.cy;  <span class="c">// 不同行：上先</span>
+    <span class="k">return</span> a.cx-b.cx;                                                  <span class="c">// 同行：左先</span>
+  });
+  <span class="k">return</span> {found, info:{c1x, c2x, c3x, used3x}};
+}</code></pre>
+
+    <h3>三尺度策略的设计取舍</h3>
+    <table>
+      <thead><tr><th>情况</th><th>1x</th><th>2x</th><th>3x</th><th>总扫描次数</th></tr></thead>
+      <tbody>
+        <tr><td>大码文档（常见）</td><td>✓ 全找到</td><td>跳过</td><td>跳过</td><td><strong>1</strong></td></tr>
+        <tr><td>大小混合</td><td>✓ 找到大的</td><td>✓ 找到小的</td><td>✓ 兜底</td><td><strong>3</strong></td></tr>
+        <tr><td>整页小码（1x 全空）</td><td>✓ 0 个</td><td>✓</td><td>✓ 救援</td><td><strong>3</strong></td></tr>
+        <tr><td><code>mode='1x'</code></td><td>✓</td><td>跳过</td><td>跳过</td><td><strong>1</strong></td></tr>
+        <tr><td><code>mode='full'</code></td><td>✓</td><td>✓</td><td>✓ 强制</td><td><strong>3</strong></td></tr>
+      </tbody>
+    </table>
+
+    <p>相比"无条件跑 3 个尺度"（3 次整页扫描），这个策略在典型场景下只需要 1 次，<strong>理论提速约 3 倍</strong>，同时保留了多尺度对小码的覆盖能力。</p>
+
+    <h3>内存护栏</h3>
+    <pre><code>2x 条件：w * h * 4 &lt;= MAXP      <span class="c">// 放大后像素数 × 4 字节</span>
+3x 条件：w * h * 9 &lt;= MAXP      <span class="c">// 面积按倍数平方增长</span></code></pre>
+    <p>例：检测图 1800×2400 = 432 万像素，3x 为 3888 万像素 × 4 = 1.55 亿字节 &gt; 1e8 → 跳过 3x。这防止超大页在 Worker 内 OOM 导致整个池崩掉。</p>
+
+    <h3><code>parse()</code>：从 ZXing 结果提取几何</h3>
+    <pre><code><span class="c">// 23007 – 23020</span>
+<span class="k">function</span> parse(list, f){
+  <span class="k">const</span> out = [];
+  <span class="k">for</span>(<span class="k">const</span> item <span class="k">of</span> list){
+    <span class="k">if</span>(!item.position) <span class="k">continue</span>;                      <span class="c">// 无坐标的丢弃</span>
+    <span class="k">const</span> p = item.position;                          <span class="c">// 码眼四点</span>
+    <span class="k">const</span> xs = [p.topLeft.x, p.topRight.x, p.bottomRight.x, p.bottomLeft.x];
+    <span class="k">const</span> ys = [p.topLeft.y, p.topRight.y, p.bottomRight.y, p.bottomLeft.y];
+    <span class="k">const</span> minX = Math.min(...xs), maxX = Math.max(...xs);
+    <span class="k">const</span> minY = Math.min(...ys), maxY = Math.max(...ys);
+    out.push({
+      cx: (minX+maxX)/<span class="n">2</span>/f, cy: (minY+maxY)/<span class="n">2</span>/f,          <span class="c">// 中心（除以放大倍数还原）</span>
+      side: Math.max(maxX-minX, maxY-minY)/f,             <span class="c">// 外接方框边长</span>
+      minX: minX/f, maxX: maxX/f, minY: minY/f, maxY: maxY/f,
+      data: item.text                                     <span class="c">// 解码内容（本工具不消费）</span>
+    });
+  }
+  <span class="k">return</span> out;
+}</code></pre>
+
+    <h3><code>dedup()</code>：跨尺度去重</h3>
+    <pre><code><span class="c">// 23022 – 23030 —— O(n²)，但 n 通常是几十量级，可接受</span>
+<span class="k">function</span> dedup(arr){
+  <span class="k">const</span> out = [];
+  <span class="k">for</span>(<span class="k">const</span> m <span class="k">of</span> arr){
+    <span class="k">let</span> dup = <span class="k">false</span>;
+    <span class="k">for</span>(<span class="k">const</span> u <span class="k">of</span> out){
+      <span class="k">if</span>(Math.hypot(u.cx-m.cx, u.cy-m.cy) &lt; Math.min(u.side, m.side) * <span class="n">0.6</span>){ dup = <span class="k">true</span>; <span class="k">break</span>; }
+    }
+    <span class="k">if</span>(!dup) out.push(m);
+  }
+  <span class="k">return</span> out;
+}</code></pre>
+    <p>阈值用 <strong>0.6 × 较小边长</strong>而非固定像素值——这样对大小不一的码都成立。选 0.6 是因为：同一码被不同尺度检测出的中心偏移通常很小，而相邻两个独立码的中心距至少是 1 倍边长。</p>
+
+    <div class="tip">
+      <span class="t">💡 顺序敏感</span>
+      <code>dedup</code> 保留先出现的。因为 <code>a1.concat(added2)</code>，所以 1x 的结果优先保留——1x 在原始分辨率上检测，几何精度更高。这是有意的。
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section id="c7">
+    <h2><span class="num">7</span>Web Worker 检测池</h2>
+
+    <p>检测是纯 CPU 密集任务。如果放主线程，会冻结 UI（进度条卡住、按钮点不动）。这工具的做法是开一个 Worker 池。</p>
+
+    <h3>为什么不是"每页一个 Worker"</h3>
+    <p>创建 Worker 并加载 WASM 有固定开销（几十毫秒到上百毫秒，含 wasm instantiate）。如果每页临时创建、用完销毁，页数多时开销会累积。所以用<strong>常驻池 + 任务队列</strong>。</p>
+
+    <h3><code>DetPool</code> 类结构</h3>
+    <table>
+      <thead><tr><th>成员</th><th>作用</th></tr></thead>
+      <tbody>
+        <tr><td><code>workers[]</code></td><td>所有存活的 Worker</td></tr>
+        <tr><td><code>idle[]</code></td><td>空闲 Worker 栈（LIFO 取，热缓存友好）</td></tr>
+        <tr><td><code>waitQ[]</code></td><td>排队中的任务（无空闲 Worker 时入队）</td></tr>
+        <tr><td><code>map</code></td><td><code>id → job</code>，消息回来时定位对应 Promise</td></tr>
+        <tr><td><code>seq</code></td><td>自增任务 ID</td></tr>
+        <tr><td><code>_url</code></td><td>由 <code>WORKER_SRC</code> 生成的 Blob URL，<strong>所有 Worker 共用</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3>池大小</h3>
+    <pre><code><span class="c">// 23158 – 23166</span>
+<span class="k">function</span> getDetPool(){
+  <span class="k">if</span>(!workerEnabled) <span class="k">return null</span>;
+  <span class="k">if</span>(detPool) <span class="k">return</span> detPool;
+  <span class="k">try</span>{
+    <span class="k">const</span> n = Math.max(<span class="n">2</span>, Math.min(<span class="n">8</span>, navigator.hardwareConcurrency || <span class="n">4</span>));
+    detPool = <span class="k">new</span> DetPool(n);
+  }<span class="k">catch</span>(e){ workerEnabled = <span class="k">false</span>; detPool = <span class="k">null</span>; }
+  <span class="k">return</span> detPool;
+}</code></pre>
+    <p>钳制在 <strong>2–8</strong>：下限 2 保证至少有点并行度；上限 8 避免在 32 核机器上开一堆 Worker 抢内存（每个 Worker 一份独立的 WASM 实例堆）。</p>
+
+    <h3>任务提交与调度</h3>
+    <pre><code><span class="c">// 23145 – 23156</span>
+submit(buf, w, h){
+  <span class="k">return new</span> Promise((resolve, reject) =&gt; {
+    <span class="k">if</span>(<span class="k">this</span>.workers.length === <span class="n">0</span>){                    <span class="c">// 兜底：池已空</span>
+      reject(<span class="k">new</span> Error(<span class="s">'所有检测 Worker 均已失效且无法重建'</span>));
+      <span class="k">return</span>;
+    }
+    <span class="k">const</span> job = {buf, w, h, resolve, reject};
+    <span class="k">const</span> wk = <span class="k">this</span>.idle.pop();
+    <span class="k">if</span>(wk) <span class="k">this</span>._run(wk, job);        <span class="c">// 有空闲：直接跑</span>
+    <span class="k">else</span>   <span class="k">this</span>.waitQ.push(job);     <span class="c">// 全忙：排队</span>
+  });
+}</code></pre>
+
+    <h3>零拷贝传输</h3>
+    <pre><code><span class="c">// 23136 —— transferable 语义，buffer 所有权移交，不复制</span>
+wk.postMessage({id, buf: buf, w: job.w, h: job.h}, [buf]);</code></pre>
+    <p>把 <code>ArrayBuffer</code> 放进 transfer list，浏览器做"所有权转移"而非结构化克隆，<strong>零拷贝</strong>。代价是主线程这一侧的 buffer 会变成 detached（长度 0），所以不能复用——这就是为什么 <code>processOnePage</code> 每次都要重新 <code>getImageData</code>。</p>
+    <p>注意 <code>imageData.data.buffer</code> 传过去后，重试逻辑（23245）必须再取一次 <code>getImageData</code>，正是这个原因。</p>
+
+    <h3>崩溃自愈机制</h3>
+    <p>Worker 可能因为：顶层脚本语法错误、WASM OOM、消息反序列化失败而<strong>静默死亡</strong>。若无处理，挂在上面的 Promise 永远不 resolve，进度条永久卡死。</p>
+
+    <pre><code><span class="c">// 23098 – 23125</span>
+<span class="k">const</span> onWorkerFailure = () =&gt; {
+  <span class="k">const</span> dead = wk;
+  <span class="k">this</span>.workers = <span class="k">this</span>.workers.filter(w =&gt; w !== dead);
+  <span class="k">const</span> idleIdx = <span class="k">this</span>.idle.indexOf(dead);
+  <span class="k">if</span>(idleIdx !== -<span class="n">1</span>) <span class="k">this</span>.idle.splice(idleIdx, <span class="n">1</span>);
+  <span class="c">/* 1. reject 该 worker 上所有未完成任务 */</span>
+  <span class="k">for</span>(<span class="k">const</span> [id, job] <span class="k">of</span> [...<span class="k">this</span>.map]){
+    <span class="k">if</span>(job.wk === dead){ <span class="k">this</span>.map.delete(id); job.reject(<span class="k">new</span> Error(<span class="s">'检测 Worker 异常终止'</span>)); }
+  }
+  <span class="c">/* 2. 新建替补，并立即消化队列（否则替补后无人 _dispatch，队列永久悬挂）*/</span>
+  <span class="k">try</span>{
+    <span class="k">this</span>._spawn();
+    <span class="k">const</span> idleWk = <span class="k">this</span>.idle.pop();
+    <span class="k">const</span> nextJob = <span class="k">this</span>.waitQ.shift();
+    <span class="k">if</span>(idleWk &amp;&amp; nextJob) <span class="k">this</span>._run(idleWk, nextJob);
+    <span class="k">else if</span>(idleWk) <span class="k">this</span>.idle.push(idleWk);
+  }<span class="k">catch</span>(e2){
+    <span class="k">for</span>(<span class="k">const</span> job <span class="k">of</span> <span class="k">this</span>.waitQ.splice(<span class="n">0</span>)) job.reject(<span class="k">new</span> Error(<span class="s">'无法创建检测 Worker'</span>));
+  }
+};
+wk.onerror = onWorkerFailure;
+wk.onmessageerror = onWorkerFailure;</code></pre>
+
+    <div class="ok">
+      <span class="t">✅ 三层防线</span>
+      ① <code>onerror</code> 捕获脚本级崩溃；② <code>onmessageerror</code> 捕获结构化克隆失败；③ <code>submit</code> 里 <code>workers.length === 0</code> 的兜底 reject。三层任一生效都能保证 Promise 不会永久悬挂。
+    </div>
+
+    <h3>上层重试</h3>
+    <pre><code><span class="c">// 23240 – 23246</span>
+<span class="k">let</span> found;
+<span class="k">try</span>{
+  found = <span class="k">await</span> pool.submit(imageData.data.buffer, detW, detH);
+}<span class="k">catch</span>(e){
+  console.warn(<span class="s">'Worker 检测失败，重试一次：'</span>, e);
+  <span class="c">// 此时 DetPool 已自动替补，重新取 imageData 再提交</span>
+  found = <span class="k">await</span> pool.submit(
+    detCanvas.getContext(<span class="s">'2d'</span>).getImageData(<span class="n">0</span>, <span class="n">0</span>, detW, detH).data.buffer, detW, detH);
+}</code></pre>
+  </section>
+
+  <!-- 8 -->
+  <section id="c8">
+    <h2><span class="num">8</span>码眼定位与正方形裁切</h2>
+
+    <h3>渲染：PDF 坐标 → 像素</h3>
+    <pre><code><span class="c">// 11427 – 11438</span>
+<span class="k">async function</span> renderPage(page, dpi){
+  <span class="k">const</span> scale = dpi / <span class="n">72</span>;                     <span class="c">// PDF 内部单位是 1/72 英寸</span>
+  <span class="k">const</span> viewport = page.getViewport({scale});
+  <span class="k">const</span> canvas = document.createElement(<span class="s">'canvas'</span>);
+  canvas.width  = Math.ceil(viewport.width);
+  canvas.height = Math.ceil(viewport.height);
+  <span class="k">const</span> ctx = canvas.getContext(<span class="s">'2d'</span>, {willReadFrequently: <span class="k">true</span>});
+  ctx.fillStyle = <span class="s">'#fff'</span>; ctx.fillRect(<span class="n">0</span>, <span class="n">0</span>, canvas.width, canvas.height);   <span class="c">// 白底</span>
+  <span class="k">await</span> page.render({canvasContext: ctx, viewport, background: <span class="s">'#fff'</span>}).promise;
+  <span class="k">return</span> canvas;
+}</code></pre>
+
+    <p>要点：</p>
+    <ul>
+      <li><code>scale = dpi / 72</code>——因为 PDF 的坐标单位是 1/72 英寸，而 DPI 是"每英寸点数"。</li>
+      <li><strong>先填白底</strong>——PDF 页面本身可能没有背景，不填白的话透明区域在后处理里会变成黑。</li>
+      <li><code>willReadFrequently: true</code>——提示浏览器这个 canvas 会被频繁 <code>getImageData</code>，让它用 CPU 后端而非 GPU，避免每帧回读的巨额开销。</li>
+    </ul>
+
+    <h3>A4 = 2480 × 3508 验算</h3>
+    <p>例：A4 为 210mm × 297mm ≈ 8.268in × 11.693in。300 DPI 下：</p>
+    <pre><code>8.268  × 300 ≈ 2480 px
+11.693 × 300 ≈ 3508 px</code></pre>
+    <p>与印刷行业标准 A4@300DPI 尺寸吻合，说明 <code>dpi/72</code> 换算正确。</p>
+
+    <h3>裁切算法</h3>
+    <pre><code><span class="c">// 23169 – 23187</span>
+<span class="k">function</span> cropQRSquare(sourceCanvas, qr, padding = <span class="n">0.06</span>){
+  <span class="k">const</span> side = Math.round(qr.side * (<span class="n">1</span> + padding * <span class="n">2</span>));   <span class="c">// 四周各留 6%</span>
+  <span class="k">const</span> cx = qr.cx, cy = qr.cy;
+  <span class="k">const</span> left = cx - side/<span class="n">2</span>, top = cy - side/<span class="n">2</span>;
+
+  <span class="k">const</span> out = document.createElement(<span class="s">'canvas'</span>);
+  out.width = out.height = Math.max(<span class="n">1</span>, side);              <span class="c">// 正方形</span>
+  <span class="k">const</span> octx = out.getContext(<span class="s">'2d'</span>);
+  octx.fillStyle = <span class="s">'#fff'</span>; octx.fillRect(<span class="n">0</span>, <span class="n">0</span>, out.width, out.height);
+
+  <span class="c">/* 源区域与目标偏移：处理越界（码贴近页边）*/</span>
+  <span class="k">const</span> sx = Math.max(<span class="n">0</span>, Math.floor(left));
+  <span class="k">const</span> sy = Math.max(<span class="n">0</span>, Math.floor(top));
+  <span class="k">const</span> sw = Math.min(sourceCanvas.width,  Math.ceil(left + side)) - sx;
+  <span class="k">const</span> sh = Math.min(sourceCanvas.height, Math.ceil(top  + side)) - sy;
+  <span class="k">const</span> dx = sx - left, dy = sy - top;                    <span class="c">// 保留亚像素偏移</span>
+
+  <span class="k">if</span>(sw &gt; <span class="n">0</span> &amp;&amp; sh &gt; <span class="n">0</span>){
+    octx.drawImage(sourceCanvas, sx, sy, sw, sh, dx, dy, sw, sh);
+  }
+  <span class="k">return</span> out;
+}</code></pre>
+
+    <h3>越界处理的设计</h3>
+    <p>如果二维码紧贴页面边缘，裁切框会超出画布。做法是：</p>
+    <ol>
+      <li>白底先铺满整个输出 canvas；</li>
+      <li>源区域裁剪到画布范围内（<code>sx/sy/sw/sh</code> 钳制）；</li>
+      <li>用 <code>dx/dy</code> 把源块画在<strong>正确的位置</strong>上，让缺的部分保留白色。</li>
+    </ol>
+    <p>结果：即使码在角落，输出依然是完整正方形 + 白边，不会变形或拉伸。</p>
+
+    <div class="tip">
+      <span class="t">💡 padding 为什么是 0.06</span>
+      ZXing 返回的 <code>side</code> 是四个码眼的外接方框，等于二维码本体大小。二维码标准要求四周有"静区（quiet zone）"才容易扫。留 6% 既保证静区，又不会让图片显得空旷。
+    </div>
+
+    <h3>检测图降采样</h3>
+    <pre><code><span class="c">// 23219 – 23232</span>
+<span class="k">const</span> longSide = Math.max(canvas.width, canvas.height);
+<span class="k">const</span> DET_LONG_MAX = <span class="n">1800</span>;
+<span class="k">if</span>(longSide &gt; DET_LONG_MAX){
+  <span class="k">const</span> ds = DET_LONG_MAX / longSide;
+  detW = Math.round(canvas.width * ds);
+  detH = Math.round(canvas.height * ds);
+  <span class="k">const</span> dc = document.createElement(<span class="s">'canvas'</span>);
+  dc.width = detW; dc.height = detH;
+  <span class="k">const</span> dctx = dc.getContext(<span class="s">'2d'</span>, {willReadFrequently: <span class="k">true</span>});
+  dctx.imageSmoothingEnabled = <span class="k">true</span>;
+  dctx.imageSmoothingQuality = <span class="s">'high'</span>;                       <span class="c">// 高质量降采样</span>
+  dctx.drawImage(canvas, <span class="n">0</span>, <span class="n">0</span>, detW, detH);
+  detCanvas = dc;
+}
+<span class="k">const</span> invScale = canvas.width / detW;                     <span class="c">// 回映射系数</span></code></pre>
+
+    <p><strong>为什么检测要降采样？</strong></p>
+    <ul>
+      <li>300 DPI 的 A4 是 2480×3508 = 870 万像素。ZXing 的 <code>tryHarder</code> 模式在这个尺寸上很慢。</li>
+      <li>降到 1800px 长边约 4.6 倍面积压缩，速度快一个数量级。</li>
+      <li><strong>关键：裁切用的还是原始高分辨率 canvas</strong>，所以输出图片质量不受影响。</li>
+      <li>1800 这个值是权衡结果：再低会开始丢小码（ZXing 需要足够的模块像素）。</li>
+    </ul>
+
+    <div class="warn">
+      <span class="t">⚠️ 分辨率解耦是这个工具的核心设计</span>
+      "检测用低分辨率（快）"和"导出用高分辨率（清楚）"是两件独立的事。<code>DET_LONG_MAX</code> 只管前者；后者由用户选的 DPI 决定。改动时不要混为一谈。
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section id="c9">
+    <h2><span class="num">9</span>命名与排序模型</h2>
+
+    <h3>三层顺序确定</h3>
+    <table>
+      <thead><tr><th>层级</th><th>决定者</th><th>代码位置</th></tr></thead>
+      <tbody>
+        <tr><td>页面顺序</td><td>页码升序</td><td>合并循环 <code>for(p=1; p&lt;=totalPages; p++)</code></td></tr>
+        <tr><td>页内顺序</td><td>阅读顺序（上→下，左→右）</td><td>Worker 内 <code>found.sort()</code></td></tr>
+        <tr><td>起始值</td><td>用户输入的起始编号</td><td><code>startNumber + globalIdx</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>阅读顺序排序规则</h3>
+    <pre><code>found.sort(<span class="k">function</span>(a, b){
+  <span class="k">if</span>(Math.abs(a.cy - b.cy) &gt; (a.side + b.side)/<span class="n">4</span>) <span class="k">return</span> a.cy - b.cy;
+  <span class="k">return</span> a.cx - b.cx;
+});</code></pre>
+
+    <p><strong>行阈值 <code>(a.side+b.side)/4</code> 的作用</strong>：如果两个码的垂直中心差<strong>小于码宽的四分之一</strong>，就认为它们在同一行，改用水平位置排序。</p>
+
+    <p>为什么要这样？看这个场景：</p>
+    <pre><code>码A: cx=100, cy=200
+码B: cx=300, cy=205     <span class="c">// 视觉上明显和 A 同一行，但 cy 略低</span>
+码C: cx=100, cy=300</code></pre>
+    <p>纯按 <code>cy</code> 排序会得到 A、B、C（碰巧对）；但如果 B 的 cy 是 199，就变成 B、A、C——明明是同一行，顺序却反了。加了行阈值后，A 和 B 判定为同行，按 cx 排成 A、B，然后才是 C。符合人的阅读直觉。</p>
+
+    <h3>编号格式化</h3>
+    <pre><code><span class="k">const</span> seq = String(startNumber + globalIdx).padStart(<span class="n">3</span>, <span class="s">'0'</span>);   <span class="c">// 1 → '001'</span>
+results.push({ <span class="c">/* ... */</span> name: seq + <span class="s">'.jpg'</span> });</code></pre>
+    <p><code>padStart(3, '0')</code> 保证 <code>001</code> 这种定宽格式，文件名排序时字典序 = 数字序。超过 999 会自然扩展为 4 位，不会截断。</p>
+
+    <h3>用户改名与非法字符清洗</h3>
+    <pre><code><span class="c">// 23321 – 23328（M2 修复）</span>
+inp.addEventListener(<span class="s">'change'</span>, () =&gt; {
+  <span class="k">let</span> v = inp.value.replace(<span class="s">/[\\/:*?"&lt;&gt;|\u0000-\u001f]/g</span>, <span class="s">''</span>).trim();
+  <span class="k">if</span>(!v) v = String(r.globalIdx).padStart(<span class="n">3</span>, <span class="s">'0'</span>);   <span class="c">// 空则回退编号</span>
+  r.name = v + <span class="s">'.jpg'</span>;
+  inp.value = v;
+});</code></pre>
+    <p>正则剔除 Windows 文件系统非法字符 <code>\ / : * ? " &lt; &gt; |</code> 以及 ASCII 控制符 <code>\u0000-\u001f</code>。<strong>中文、字母、数字、下划线、连字符、空格都允许</strong>——这些靠 ZIP 的 UTF-8 flag 支持。</p>
+
+    <h3>重名自动避让</h3>
+    <pre><code><span class="c">// 23365 – 23377（导出阶段）</span>
+<span class="k">const</span> seen = <span class="k">new</span> Set();
+<span class="k">let</span> fname = r.name;
+<span class="k">if</span>(seen.has(fname)){
+  <span class="k">const</span> base = fname.replace(/\.jpg$/i, <span class="s">''</span>);
+  <span class="k">let</span> n = <span class="n">2</span>;
+  <span class="k">while</span>(seen.has(<span class="s">`${base}_${n}.jpg`</span>)) n++;
+  fname = <span class="s">`${base}_${n}.jpg`</span>;
+}
+seen.add(fname);</code></pre>
+    <p>同名的第二个变 <code>xxx_2.jpg</code>，第三个 <code>xxx_3.jpg</code>。<strong>保证 ZIP 内无重名，不会静默丢文件</strong>。</p>
+
+    <h3>删除操作的索引安全</h3>
+    <pre><code><span class="c">// 23334 – 23340（O1 修复）</span>
+delBtn.addEventListener(<span class="s">'click'</span>, () =&gt; {
+  <span class="k">const</span> idx = results.indexOf(r);    <span class="c">// ← 用对象引用定位，不用循环闭包里的 i</span>
+  <span class="k">if</span>(idx !== -<span class="n">1</span>) results.splice(idx, <span class="n">1</span>);
+  card.remove();                     <span class="c">// 局部 DOM 移除，不整体重建</span>
+  <span class="k">/* ... 更新状态文字、按钮状态 ... */</span>
+});</code></pre>
+    <p>如果按闭包里的循环变量 <code>i</code> 删除，删了第一个后后面的索引全部错位。用对象引用定位则永远正确。</p>
+  </section>
+
+  <!-- 10 -->
+  <section id="c10">
+    <h2><span class="num">10</span>零依赖 ZIP 打包器</h2>
+
+    <p>ZIP 格式本身很简单，手写只要约 60 行，比引入 JSZip（约 100KB）划算。</p>
+
+    <h3>一个 ZIP 文件的三段结构</h3>
+    <div class="flow">
+      <span class="box">[LFH₁ + 数据₁]</span>
+      <span class="box">[LFH₂ + 数据₂]</span>
+      <span class="box">…</span>
+      <span class="box">[CDH₁ CDH₂ …]</span>
+      <span class="box">[EOCD]</span>
+    </div>
+    <table>
+      <thead><tr><th>缩写</th><th>签名</th><th>作用</th></tr></thead>
+      <tbody>
+        <tr><td>LFH</td><td><code>0x04034B50</code></td><td>Local File Header，每个文件一个，后跟原始数据</td></tr>
+        <tr><td>CDH</td><td><code>0x02014B50</code></td><td>Central Directory Header，全部集中在文件末尾</td></tr>
+        <tr><td>EOCD</td><td><code>0x06054B50</code></td><td>End of Central Directory，文件数 + 目录偏移，解压器从这里开始读</td></tr>
+      </tbody>
+    </table>
+
+    <h3>CRC32 实现</h3>
+    <pre><code><span class="c">// 11373 – 11386</span>
+<span class="k">function</span> crc32(buf){
+  <span class="k">if</span>(!crc32.table){
+    <span class="k">const</span> t = <span class="k">new</span> Uint32Array(<span class="n">256</span>);
+    <span class="k">for</span>(<span class="k">let</span> n = <span class="n">0</span>; n &lt; <span class="n">256</span>; n++){
+      <span class="k">let</span> c = n;
+      <span class="k">for</span>(<span class="k">let</span> k = <span class="n">0</span>; k &lt; <span class="n">8</span>; k++) c = (c &amp; <span class="n">1</span>) ? (<span class="n">0xEDB88320</span> ^ (c &gt;&gt;&gt; <span class="n">1</span>)) : (c &gt;&gt;&gt; <span class="n">1</span>);
+      t[n] = c &gt;&gt;&gt; <span class="n">0</span>;
+    }
+    crc32.table = t;                                   <span class="c">// 表只建一次，缓存在函数属性上</span>
+  }
+  <span class="k">let</span> crc = <span class="n">0xFFFFFFFF</span>;
+  <span class="k">for</span>(<span class="k">let</span> i = <span class="n">0</span>; i &lt; buf.length; i++)
+    crc = (crc &gt;&gt;&gt; <span class="n">8</span>) ^ crc32.table[(crc ^ buf[i]) &amp; <span class="n">0xFF</span>];
+  <span class="k">return</span> (crc ^ <span class="n">0xFFFFFFFF</span>) &gt;&gt;&gt; <span class="n">0</span>;
+}</code></pre>
+    <p>标准 CRC-32（多项式 <code>0xEDB88320</code>，即反射后的 IEEE 802.3）。256 项查表，O(n) 处理。用 <code>crc32.table</code> 缓存表而不是模块级变量，是刻意的——函数自带缓存，不污染外部作用域。</p>
+
+    <h3>buildZip 关键片段</h3>
+    <pre><code><span class="c">// 11393 —— UTF-8 文件名 flag（M2 修复的核心）</span>
+<span class="k">const</span> FLAGS = <span class="n">0x0800</span>;</code></pre>
+    <p>bit 11 = 1 表示"文件名是 UTF-8 编码"。<strong>没有这一位，中文文件名在解压时会是乱码</strong>。</p>
+
+    <pre><code><span class="c">// 11395 —— 临时读一次算 CRC，然后释放；原始 Blob 零拷贝拼入</span>
+<span class="k">const</span> data = <span class="k">new</span> Uint8Array(<span class="k">await</span> f.blob.arrayBuffer());
+<span class="k">const</span> crc = crc32(data), dataLen = data.length;
+<span class="c">/* ... 写 LFH ... */</span>
+localParts.push(local, f.blob);      <span class="c">// ← 注意：push 的是原始 blob，不是 data</span></code></pre>
+    <p>这就是 O5 修复：<code>data</code> 只是用来算 CRC 的临时视图，算完即可被 GC。真正进最终 Blob 的是浏览器原生的 <code>f.blob</code> 对象，<strong>避免把几十 MB 的 JPG 再复制一遍</strong>。</p>
+
+    <pre><code><span class="c">// 11423 —— 一次 Blob 组装，浏览器内部流式处理</span>
+<span class="k">return new</span> Blob([...localParts, ...centralParts, end], {type: <span class="s">'application/zip'</span>});</code></pre>
+
+    <h3>为什么不做压缩</h3>
+    <p>LFH 里的 compression method 写的是 <code>0</code>（store，不压缩）。原因：JPG 本身已经是高压缩格式，再套 deflate <strong>几乎压不动</strong>（通常只能再减 1–3%），但 CPU 开销很大。所以选择 store，整体更快。</p>
+
+    <div class="warn">
+      <span class="t">⚠️ 如果改成压缩</span>
+      需要设 method = 8（deflate），并处理 <code>CompressionStream('deflate-raw')</code>。注意必须是 <code>deflate-raw</code> 而不是 <code>deflate</code>——ZIP 用的是裸 deflate 流，不带 zlib 头。用错了解压会失败。
+    </div>
+
+    <h3>进度反馈与让出主线程</h3>
+    <pre><code><span class="c">// 11415</span>
+<span class="k">if</span>(onProgress &amp;&amp; i % <span class="n">5</span> === <span class="n">0</span>){
+  onProgress(i+<span class="n">1</span>, files.length);
+  <span class="k">await new</span> Promise(r =&gt; setTimeout(r, <span class="n">0</span>));      <span class="c">// 让出主线程，UI 能刷新</span>
+}</code></pre>
+    <p>每 5 个文件让出一次。这样进度条能动、页面不假死。间隔 5 是为了平衡"反馈流畅度"和"setTimeout 的 4ms 最小开销"。</p>
+
+    <h3>16 位字段溢出风险</h3>
+    <p>EOCD 的文件数（offset 8/10）和 CDH 的某些字段是 16 位，最多 65535。<code>f.setUint16(8, files.length, true)</code> 在文件数超限时会静默截断。</p>
+    <p>实际上不会触发：单份 PDF 提取的二维码数量极少超过几千。但如果要做 Zip64 扩展（&gt;4GB 或 &gt;65535 文件），需要新增 Zip64 EOCD 记录。当前不做，属已知边界。</p>
+  </section>
+
+  <!-- 11 -->
+  <section id="c11">
+    <h2><span class="num">11</span>UI 与交互层</h2>
+
+    <h3>布局结构</h3>
+    <pre><code><span class="c">/* 11139 – 11141 */</span>
+.layout { display: flex; height: calc(100vh - 56px); }   <span class="c">/* 56px = topbar 高度 */</span>
+.sidebar{ width: 360px; min-width: 360px; overflow-y: auto; }
+.stage  { flex: 1; overflow: auto; }</code></pre>
+    <p>左侧固定宽 + 右侧弹性。左右各自独立滚动，互不影响。</p>
+
+    <h3>设计变量</h3>
+    <pre><code>:root{
+  --bg:#f4f6f9; --panel:#fff; --border:#e3e8ef; --text:#1f2933; --sub:#6b7685;
+  --primary:#2f6fed; --primary-dark:#2257c4;
+  --ok:#1f9d55; --warn:#d98300; --danger:#e5484d;
+  --radius:10px; --gap:14px;
+}</code></pre>
+
+    <h3>Toast 提示系统</h3>
+    <pre><code><span class="c">// 11300 – 11308</span>
+<span class="k">function</span> toast(msg, type = <span class="s">'info'</span>){
+  <span class="k">const</span> el = document.createElement(<span class="s">'div'</span>);
+  el.className = <span class="s">'toast '</span> + (type === <span class="s">'error'</span> ? <span class="s">'error'</span> : type === <span class="s">'warn'</span> ? <span class="s">'warn'</span> : type === <span class="s">'ok'</span> ? <span class="s">'ok'</span> : <span class="s">''</span>);
+  el.textContent = msg;
+  $<span class="s">('toastBox')</span>.appendChild(el);
+  setTimeout(() =&gt; { el.style.opacity = <span class="s">'0'</span>; el.style.transition = <span class="s">'opacity .3s'</span>; }, <span class="n">3500</span>);
+  setTimeout(() =&gt; el.remove(), <span class="n">3900</span>);
+}</code></pre>
+    <p>两个定时器：3500ms 开始淡出（0.3s 过渡），3900ms 彻底移除。<strong>先淡出再移除</strong>，避免元素"啪"地消失。</p>
+    <p>用 <code>textContent</code> 而非 <code>innerHTML</code>——消息里可能含用户文件名，防 XSS。</p>
+
+    <h3>拖拽加载（含 M1 修复）</h3>
+    <pre><code><span class="c">// 11348 – 11370</span>
+<span class="k">let</span> __dragDepth = <span class="n">0</span>;                     <span class="c">// 深度计数，解决子元素冒泡导致遮罩闪烁</span>
+window.addEventListener(<span class="s">'dragenter'</span>, e =&gt; {
+  <span class="k">if</span>(e.dataTransfer &amp;&amp; Array.prototype.indexOf.call(e.dataTransfer.types, <span class="s">'Files'</span>) &gt; -<span class="n">1</span>){
+    __dragDepth++;
+    dropOverlay.style.display = <span class="s">'flex'</span>;
+  }
+});
+window.addEventListener(<span class="s">'dragleave'</span>, () =&gt; {      <span class="c">// 注意：dragleave 没有参数判断</span>
+  <span class="k">if</span>(__dragDepth &gt; <span class="n">0</span>) __dragDepth--;
+  <span class="k">if</span>(__dragDepth === <span class="n">0</span>) dropOverlay.style.display = <span class="s">'none'</span>;
+});
+window.addEventListener(<span class="s">'dragend'</span>, () =&gt; {          <span class="c">// M1：Esc/取消拖拽时清理残留遮罩</span>
+  __dragDepth = <span class="n">0</span>;
+  dropOverlay.style.display = <span class="s">'none'</span>;
+});
+window.addEventListener(<span class="s">'drop'</span>, e =&gt; {
+  e.preventDefault();
+  __dragDepth = <span class="n">0</span>;
+  dropOverlay.style.display = <span class="s">'none'</span>;
+  <span class="k">const</span> f = e.dataTransfer &amp;&amp; e.dataTransfer.files &amp;&amp; e.dataTransfer.files[<span class="n">0</span>];
+  <span class="k">if</span>(f) loadPdfFile(f);
+});</code></pre>
+
+    <p><strong>深度计数为什么必要</strong>：<code>dragenter</code> 会在鼠标移过每个子元素时反复触发（冒泡）。如果只用一个布尔值，鼠标从 body 移到某个 div 上就会触发 <code>dragleave</code>，遮罩闪一下。用计数器则只有真正离开整个窗口时才归零。</p>
+    <p><strong>M1 修复</strong>：按 Esc 取消拖拽时，<code>dragleave</code> 可能不触发，遮罩就永远留在屏幕上。<code>dragend</code> 事件兜底清理。</p>
+
+    <h3>文件输入同步（拖拽后回填）</h3>
+    <pre><code><span class="c">// 11318 – 11323</span>
+<span class="k">if</span>(pdfInput.files.length === <span class="n">0</span> || pdfInput.files[<span class="n">0</span>].name !== f.name){
+  <span class="k">const</span> syncDT = <span class="k">new</span> DataTransfer();
+  syncDT.items.add(f);
+  pdfInput.files = syncDT.files;
+}</code></pre>
+    <p>拖拽加载不会自动更新 <code>&lt;input type="file"&gt;</code>，界面上会显示"未选择任何文件"，容易让用户困惑。用 <code>DataTransfer</code> 手动回填，UI 就一致了。<strong>程序化赋值不触发 <code>change</code> 事件</strong>，所以不会死循环。</p>
+
+    <h3>结果渲染：DocumentFragment</h3>
+    <pre><code><span class="c">// 23303 / 23345</span>
+<span class="k">const</span> frag = document.createDocumentFragment();
+results.forEach((r, i) =&gt; { <span class="c">/* ... 构建 card ... */</span> frag.appendChild(card); });
+resultBody.appendChild(frag);      <span class="c">// 一次性插入，只触发一次重排</span></code></pre>
+    <p>几十张卡片逐个 <code>appendChild</code> 会触发几十次布局计算。用 fragment 聚合成一次插入。</p>
+
+    <h3>缩略图与导出的画质分层</h3>
+    <table>
+      <thead><tr><th>用途</th><th>质量</th><th>位置</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td>缩略图</td><td><code>0.85</code></td><td>23309 <code>toDataURL</code></td><td>只是预览，压一点省内存</td></tr>
+        <tr><td>导出</td><td><code>0.92</code></td><td>23368 <code>toBlob</code></td><td>最终成品，画质优先</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 12 -->
+  <section id="c12">
+    <h2><span class="num">12</span>容错与缺陷修复记录</h2>
+
+    <p>代码注释里带 <code>S1/S2/M1/M2/M3/O1–O5</code> 标记的，都是历次修复。汇总如下，作为维护参考。</p>
+
+    <h3>S 级：稳定性</h3>
+    <table>
+      <thead><tr><th>编号</th><th>问题</th><th>修复</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>S1</strong></td>
+          <td>Web Worker 完全不可用时<strong>静默产出 0 结果</strong>，用户以为"PDF 里没有二维码"</td>
+          <td>23235–23238：<code>getDetPool()</code> 返回 null 时<strong>显式抛错</strong>，提示"当前环境不支持 Web Worker，请使用最新版 Chrome/Edge"</td>
+        </tr>
+        <tr>
+          <td><strong>S2</strong></td>
+          <td>Worker 崩溃后 Promise 永久悬挂 → 进度条卡死，永远不结束</td>
+          <td>23098–23125：<code>onerror</code>/<code>onmessageerror</code> 处理器 + 替补 Worker + 队列消化</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>M 级：功能</h3>
+    <table>
+      <thead><tr><th>编号</th><th>问题</th><th>修复</th></tr></thead>
+      <tbody>
+        <tr><td><strong>M1</strong></td><td>Esc 取消拖拽后，半透明遮罩残留在屏幕上</td><td>11360–11363：新增 <code>dragend</code> 监听清理</td></tr>
+        <tr><td><strong>M2</strong></td><td>中文文件名被<strong>静默丢弃</strong>（用户输了但导出后名字变了）</td><td>23321–23328：正则只剔除真正非法字符；ZIP 侧用 <code>FLAGS = 0x0800</code> 声明 UTF-8</td></tr>
+        <tr><td><strong>M3</strong></td><td>1x、2x 都漏检时 3x 永不触发 → 整页小码全丢</td><td>23049–23051：新增 <code>c1x === 0</code> 分支，1x 全空时强制跑 3x 救援</td></tr>
+      </tbody>
+    </table>
+
+    <h3>O 级：正确性与性能</h3>
+    <table>
+      <thead><tr><th>编号</th><th>问题</th><th>修复</th></tr></thead>
+      <tbody>
+        <tr><td><strong>O1</strong></td><td>用闭包循环变量 <code>i</code> 删除，删第一个后索引错位，删错对象</td><td>23335：改用 <code>results.indexOf(r)</code> 对象引用定位</td></tr>
+        <tr><td><strong>O2</strong></td><td>0 结果时导出按钮仍可点，导出空气包</td><td>23288：<code>exportBtn.disabled = (results.length === 0)</code></td></tr>
+        <tr><td><strong>O3</strong></td><td>换 PDF 后旧的二维码残留，导出按钮状态不一致</td><td>11324–11328：加载新 PDF 时清空 <code>results</code> 与 DOM</td></tr>
+        <tr><td><strong>O4</strong></td><td>某页处理失败被静默跳过，用户不知道少了几页</td><td>23264/23289：记录 <code>failedPages</code>，完成时 toast 披露具体页码</td></tr>
+        <tr><td><strong>O5</strong></td><td>ZIP 打包时 JPG 被复制两次（arrayBuffer → Uint8Array → Blob），大文件内存翻倍</td><td>11394–11404：CRC 算完即释放临时数组，原始 Blob 直接零拷贝拼入</td></tr>
+      </tbody>
+    </table>
+
+    <h3>已移除的死代码</h3>
+    <p><strong>主线程回退检测</strong>（<code>detectQRs</code> / <code>detectScalesFor</code> / <code>DETECT_MAX_PIXELS</code>）：原设计是"Worker 不可用时退回主线程检测"。但这些函数引用了 <code>ZXingWASM</code>，而该全局<strong>只在 Worker 内通过 importScripts 加载</strong>，主线程从未定义——所以回退路径本身就是坏的，一旦触发只会抛 <code>ReferenceError</code> 或静默返回 0。</p>
+    <p>v1.1 决定彻底删除，改为"Worker 不可用即显式报错"（S1）。这是"失败要显式"原则的直接体现。</p>
+
+    <div class="danger">
+      <span class="t">⛔ 维护红线</span>
+      不要试图"恢复"主线程检测。如果确有需求，必须先在主线程包含一份 zxing 代码——那会让文件体积翻倍。当前的设计取舍是：<strong>只支持支持 Web Worker 的现代浏览器</strong>。
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section id="c13">
+    <h2><span class="num">13</span>性能特征与调优</h2>
+
+    <h3>耗时构成（典型 A4 单页，300 DPI）</h3>
+    <table>
+      <thead><tr><th>阶段</th><th>相对耗时</th><th>影响因素</th></tr></thead>
+      <tbody>
+        <tr><td>PDF 渲染</td><td>~40%</td><td>与 DPI² 成正比；页面矢量复杂度</td></tr>
+        <tr><td>降采样</td><td>~5%</td><td>drawImage 高质量插值</td></tr>
+        <tr><td>二维码检测</td><td>~50%</td><td>检测图面积、尺度轮次（1/2/3）、CPU 核数</td></tr>
+        <tr><td>裁切</td><td>&lt;5%</td><td>码数量</td></tr>
+      </tbody>
+    </table>
+
+    <p>代码里 <code>console.log('PAGE', p, 'render', …, 'detect', …, 'crop', …)</code> 就是为这个分析预留的。打开 DevTools 控制台，处理一份 PDF，能看到每页的实测耗时分布。</p>
+
+    <h3>三档 DPI 的实际差异</h3>
+    <table>
+      <thead><tr><th>DPI</th><th>相对像素量</th><th>相对耗时</th><th>适用</th></tr></thead>
+      <tbody>
+        <tr><td>200</td><td>0.44×</td><td>~0.5×</td><td>页数多、码大且清楚</td></tr>
+        <tr><td>300</td><td>1×</td><td>1×</td><td>默认，通用</td></tr>
+        <tr><td>400</td><td>1.78×</td><td>~1.8×</td><td>小码、密集排版</td></tr>
+      </tbody>
+    </table>
+    <p>注意渲染耗时是 DPI² 关系：400/300 的面积比是 1.78，所以耗时约 1.78 倍而非 1.33 倍。</p>
+
+    <h3>页数并发的收益边界</h3>
+    <p>并发页数 <code>2 → 3 → 4</code> 的加速比大致是 <code>1.7× → 2.2× → 2.6×</code>（达不到线性），原因：</p>
+    <ul>
+      <li>检测侧 Worker 池大小是 CPU 核数决定的，页并发超过核数后检测开始排队。</li>
+      <li>渲染在主线程，多页渲染其实是"分时"而不是"同时"。</li>
+      <li>内存带宽和 GC 成为瓶颈。</li>
+    </ul>
+
+    <h3>内存占用估算</h3>
+    <pre><code><span class="c">/* 单页峰值 */</span>
+全尺寸 canvas:  2480 × 3508 × 4 B ≈ 34.8 MB
+检测 canvas:    1800 × 2546 × 4 B ≈ 18.3 MB
+2x 放大:        3600 × 5092 × 4 B ≈ 73.3 MB   <span class="c">← 峰值主要来自这里</span>
+3x 放大:        5400 × 7638 × 4 B ≈ 165  MB   <span class="c">← 被 MAXP 拦住，通常不执行</span></code></pre>
+    <p>这就是 <code>MAXP = 1e8</code> 的意义：3x 需要 1.65 亿字节 &gt; 1e8 字节 → 跳过。<strong>用"跳过最高尺度"换取"不 OOM"</strong>。</p>
+
+    <h3>调优建议</h3>
+    <table>
+      <thead><tr><th>症状</th><th>调整</th></tr></thead>
+      <tbody>
+        <tr><td>处理太慢</td><td>DPI 降到 200；并发页数提到 4–6</td></tr>
+        <tr><td>页面卡顿、风扇狂转</td><td>并发页数降到 1–2；DPI 降到 200</td></tr>
+        <tr><td>小码漏检</td><td>DPI 提到 400；检查 <code>DET_LONG_MAX</code> 是否被调低</td></tr>
+        <tr><td>浏览器标签页崩溃（OOM）</td><td>DPI 降到 200；并发降到 1；分批处理 PDF</td></tr>
+        <tr><td>导出很慢</td><td>正常现象，JPG 编码是串行的。图片数量多时耗时线性增长</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 14 -->
+  <section id="c14">
+    <h2><span class="num">14</span>兼容性矩阵</h2>
+
+    <h3>浏览器支持</h3>
+    <table>
+      <thead><tr><th>浏览器</th><th>最低版本</th><th>状态</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>Chrome</td><td>90+</td><td>✅ 完全支持</td><td>推荐；WASM + Worker + Canvas 全套齐备</td></tr>
+        <tr><td>Edge</td><td>90+</td><td>✅ 完全支持</td><td>同 Chromium 内核</td></tr>
+        <tr><td>Firefox</td><td>89+</td><td>✅ 支持</td><td>性能略低于 Chromium 系</td></tr>
+        <tr><td>Safari</td><td>15+</td><td>⚠️ 基本可用</td><td>Blob Worker 与 WASM 限制较多，未充分验证</td></tr>
+        <tr><td>IE 11</td><td>—</td><td>❌ 不支持</td><td>无 WASM、无 class、无模板字符串</td></tr>
+        <tr><td>移动端浏览器</td><td>—</td><td>⚠️ 不推荐</td><td>内存受限，大 PDF 易崩溃</td></tr>
+      </tbody>
+    </table>
+
+    <h3>必需 API 清单</h3>
+    <table>
+      <thead><tr><th>API</th><th>用途</th><th>无此 API 后果</th></tr></thead>
+      <tbody>
+        <tr><td><code>WebAssembly</code></td><td>zxing 与 pdf.js 核心</td><td>完全不可用</td></tr>
+        <tr><td><code>Worker</code> + Blob URL</td><td>检测池</td><td>S1：显式报错，不静默失败</td></tr>
+        <tr><td><code>Canvas2D</code> + <code>toBlob</code></td><td>渲染与导出</td><td>不可用</td></tr>
+        <tr><td><code>DataTransfer</code></td><td>拖拽后回填 input</td><td>仅 UI 显示不一致，功能不受影响</td></tr>
+        <tr><td><code>Promise</code> / <code>async</code></td><td>全流程</td><td>不可用</td></tr>
+        <tr><td><code>String.prototype.padStart</code></td><td>编号格式化</td><td>不可用（ES2017）</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip">
+      <span class="t">💡 file:// 协议下的限制</span>
+      双击打开时页面运行在 <code>file://</code> 协议下。这个环境下 <code>Blob URL</code> 正常工作（pdf.js worker 和检测池都依赖它），但如果浏览器策略收紧（如某些企业版策略禁止 file:// 下的 Worker），会触发 S1 的显式报错。<br>
+      兜底方案：起一个本地静态服务器（<code>python -m http.server</code>）用 <code>http://localhost</code> 打开，或使用 Chrome 的 <code>--allow-file-access-from-files</code>。
+    </div>
+
+    <h3>PDF 特性支持</h3>
+    <table>
+      <thead><tr><th>PDF 类型</th><th>支持</th></tr></thead>
+      <tbody>
+        <tr><td>标准 PDF（矢量 + 嵌入字体）</td><td>✅</td></tr>
+        <tr><td>扫描件 PDF（整页是位图）</td><td>✅（识别率取决于源图清晰度）</td></tr>
+        <tr><td>加密 / 有打开密码的 PDF</td><td>❌ 加载失败，需先去密码</td></tr>
+        <tr><td>含表单 / 注释的 PDF</td><td>✅（按渲染结果处理）</td></tr>
+        <tr><td>多页 PDF</td><td>✅ 逐页处理</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 15 -->
+  <section id="c15">
+    <h2><span class="num">15</span>构建与离线打包流程</h2>
+
+    <h3>两类产物</h3>
+    <table>
+      <thead><tr><th>产物</th><th>用途</th><th>是否在仓库</th></tr></thead>
+      <tbody>
+        <tr><td>开发版 HTML</td><td>开发调试，可能引用外部 CDN</td><td>视项目结构</td></tr>
+        <tr><td><code>pdf-qr-cropper-offline.html</code></td><td>交付给用户的单文件离线版</td><td>✅</td></tr>
+      </tbody>
+    </table>
+
+    <h3>离线打包的四件事</h3>
+    <ol>
+      <li><strong>内联 pdf.js</strong>——把 <code>pdf.min.js</code> 的 UMD 产物原样插入 <code>&lt;script&gt;</code>（保留 license 头）。</li>
+      <li><strong>内联 pdf.js worker</strong>——把 <code>pdf.worker.min.js</code> 放进 <code>&lt;script type="text/plain" id="__pdfWorkerCode"&gt;</code>，运行时读 <code>textContent</code> 转 Blob URL（代码 11275–11281）。</li>
+      <li><strong>内联 zxing-wasm</strong>——WASM 二进制转 base64，按行拼接塞进 <code>WORKER_SRC</code> 模板字符串。这是 4 MB 体积的主要来源。</li>
+      <li><strong>重写 <code>locateFile</code></strong>——zxing 默认从 jsdelivr 拉 wasm，必须改成从内联数据加载，否则断网失效。</li>
+    </ol>
+
+    <pre><code>zxing 默认（会被离线校验拦下）:
+https://fastly.jsdelivr.net/npm/zxing-wasm@3.0.2/dist/reader/zxing_reader.wasm</code></pre>
+
+    <h3>构建命令</h3>
+    <pre><code>python .offline-build/build-offline.py</code></pre>
+    <p>脚本负责：读取各依赖 → 内联 → 生成 <code>pdf-qr-cropper-offline.html</code> → 校验。</p>
+
+    <h3>发布前必查清单</h3>
+    <table>
+      <thead><tr><th>#</th><th>检查项</th><th>方法</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>无外链资源</td><td>搜索 <code>https://</code>，除了 license 注释和 XML 命名空间外不应有可加载 URL</td></tr>
+        <tr><td>2</td><td>体积在预算内</td><td><code>ls -l</code>，当前 4.10 MB，上限 10 MB</td></tr>
+        <tr><td>3</td><td>断网可用</td><td>拔网线或 DevTools 设 Offline，完整跑一遍</td></tr>
+        <tr><td>4</td><td>回归基准通过</td><td>300 DPI 下检测数 40/40、20/20（见第 17 章）</td></tr>
+        <tr><td>5</td><td>JS 语法无误</td><td>DevTools 控制台无报错</td></tr>
+        <tr><td>6</td><td>Worker 模板字符串未破坏</td><td>看控制台有无 "Worker 检测失败" 警告</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn">
+      <span class="t">⚠️ 第 6 项最容易被忽略</span>
+      模板字符串被破坏时，症状是"检测永远返回 0"而不是报错。<strong>任何对 <code>WORKER_SRC</code>（11449–23076）的改动之后，都必须跑一次回归。</strong>
+    </div>
+  </section>
+
+  <!-- 16 -->
+  <section id="c16">
+    <h2><span class="num">16</span>扩展指南</h2>
+
+    <h3>要支持条形码（一维码）</h3>
+    <p>改 <code>runDetect</code>（23002–23005）里的 <code>formats</code>：</p>
+    <pre><code><span class="c">// 当前：只认 QR Code</span>
+{tryHarder: <span class="k">true</span>, formats: [<span class="s">'QRCode'</span>], maxNumberOfSymbols: <span class="n">255</span>}
+
+<span class="c">// 改成：二维码 + 常见一维码</span>
+{tryHarder: <span class="k">true</span>, formats: [<span class="s">'QRCode'</span>, <span class="s">'Code128'</span>, <span class="s">'Code39'</span>, <span class="s">'EAN13'</span>], maxNumberOfSymbols: <span class="n">255</span>}</code></pre>
+    <p>但注意：<strong>裁切逻辑假设了正方形</strong>（<code>cropQRSquare</code> 用 <code>Math.max</code> 取外接方框）。一维码是长条形，按正方形裁会切掉两端。需要新增一个按检测类型分派的裁切函数，用 <code>minX/maxX/minY/maxY</code> 直接裁矩形（这些字段已经存在，只是当前没用）。</p>
+
+    <h3>要支持输出 PNG</h3>
+    <pre><code><span class="c">// 23309 缩略图</span>
+img.src = r.canvas.toDataURL(<span class="s">'image/png'</span>);
+
+<span class="c">// 23368 导出</span>
+<span class="k">const</span> blob = <span class="k">await new</span> Promise(resolve =&gt; r.canvas.toBlob(resolve, <span class="s">'image/png'</span>));
+<span class="c">/* 并同步改 name 后缀与重名检测正则 /\.jpg$/i → /\.png$/i */</span></code></pre>
+    <p>PNG 是无损格式，体积会大很多（二维码图通常 5–10 倍），但边缘更锐利。如果需要，建议做成下拉选项而不是替换。</p>
+
+    <h3>要支持多 PDF 批处理</h3>
+    <p>当前架构是"单文件单次"。要扩展需要：</p>
+    <ol>
+      <li>把 <code>currentPdf</code> / <code>currentFileName</code> 改成数组或队列。</li>
+      <li>合并循环的 <code>pageResults[页码]</code> 改成 <code>[文件索引][页码]</code> 二维暂存。</li>
+      <li>ZIP 内按文件建子目录（需要在文件名里放 <code>文件夹/</code>，ZIP 格式支持）。</li>
+      <li>最省事的方案：<strong>不改架构</strong>，让用户依次处理，导出时把「起始编号」衔接起来，最后自己合并 ZIP。</li>
+    </ol>
+
+    <h3>要支持多尺度参数化</h3>
+    <p>当前尺度是硬编码的 1/2/3。如果要做成可配置：</p>
+    <pre><code><span class="c">// 把 detectPage 里的 2、3 抽成参数</span>
+<span class="k">async function</span> detectPage(buf, w, h, mode, scales = [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>])</code></pre>
+    <p>但要注意 <code>MAXP</code> 检查是 <code>w*h*4</code> / <code>w*h*9</code> 的硬编码，需要改成 <code>w*h*s*s</code>。</p>
+
+    <h3>要调 <code>DET_LONG_MAX</code></h3>
+    <table>
+      <thead><tr><th>值</th><th>效果</th></tr></thead>
+      <tbody>
+        <tr><td>1200</td><td>更快，但小码（尺寸 &lt; 约 40px）开始漏检</td></tr>
+        <tr><td><strong>1800</strong></td><td>默认，平衡点</td></tr>
+        <tr><td>2400</td><td>小码识别率提升，检测耗时增加约 78%</td></tr>
+      </tbody>
+    </table>
+
+    <h3>要改裁切留白</h3>
+    <pre><code>cropQRSquare(canvas, qr, <span class="n">0.06</span>)   <span class="c">// 默认四周各 6%</span></code></pre>
+    <p>调大到 0.1 会更宽松（静区更足），调小到 0.02 更紧凑（贴边）。不建议低于 0.02——二维码标准要求静区。</p>
+
+    <h3>要加 OCR 提取二维码内容</h3>
+    <p>检测结果里 <code>qr.data</code> 已经是<strong>解码出的文本内容</strong>（ZXing 顺手解了），当前只是没消费。要做的话：</p>
+    <ol>
+      <li>在 <code>results</code> 里保留 <code>qr.data</code>（已经在）。</li>
+      <li>加一列 UI，把内容显示/可复制。</li>
+      <li>可选：导出时生成一个 <code>index.csv</code>（文件名, 页码, 内容），一起塞进 ZIP。</li>
+    </ol>
+    <p>注意：如果二维码内容是二进制或含不可打印字符，需要做转义。</p>
+  </section>
+
+  <!-- 17 -->
+  <section id="c17">
+    <h2><span class="num">17</span>调试与自测清单</h2>
+
+    <h3>回归基准</h3>
+    <table>
+      <thead><tr><th>样例</th><th>DPI</th><th>预期检测数</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td>样例 A</td><td>300</td><td><strong>40 / 40</strong></td><td>大码为主，验证基础路径</td></tr>
+        <tr><td>样例 B</td><td>300</td><td><strong>20 / 20</strong></td><td>大小混合，验证多尺度与去重</td></tr>
+      </tbody>
+    </table>
+    <p>任何改动后跑这两个样例。数目不对就说明识别链路被破坏了。</p>
+
+    <h3>控制台日志解读</h3>
+    <pre><code>PAGE 3 render 412 detect 208 crop 11 found 5 detSize 1800x2546</code></pre>
+    <table>
+      <thead><tr><th>字段</th><th>含义</th></tr></thead>
+      <tbody>
+        <tr><td><code>PAGE 3</code></td><td>第 3 页（注意：并行时打印顺序是乱的，按页码分组看）</td></tr>
+        <tr><td><code>render 412</code></td><td>渲染耗时 412ms</td></tr>
+        <tr><td><code>detect 208</code></td><td>检测耗时 208ms（含 Worker 往返）</td></tr>
+        <tr><td><code>crop 11</code></td><td>裁切耗时 11ms</td></tr>
+        <tr><td><code>found 5</code></td><td>本页找到 5 个码</td></tr>
+        <tr><td><code>detSize 1800x2546</code></td><td>实际检测图尺寸（若等于原图尺寸说明未降采样）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>控制台验证脚本</h3>
+
+    <details>
+      <summary>① 检查 Worker 是否正常创建</summary>
+      <div class="ans">
+<pre><code><span class="k">const</span> p = getDetPool();
+console.log(<span class="s">'池大小'</span>, p ? p.workers.length : <span class="s">'null（Worker 不可用）'</span>);
+console.log(<span class="s">'空闲数'</span>, p ? p.idle.length : <span class="s">'-'</span>);</code></pre>
+        预期：池大小 = CPU 核数（钳制 2–8），空闲数 = 池大小。
+      </div>
+    </details>
+
+    <details>
+      <summary>② 单独测试一次检测提交</summary>
+      <div class="ans">
+<pre><code><span class="c">// 造一个纯白 100x100 图提交，预期返回空数组而非报错</span>
+<span class="k">const</span> c = document.createElement(<span class="s">'canvas'</span>);
+c.width = c.height = <span class="n">100</span>;
+<span class="k">const</span> cx = c.getContext(<span class="s">'2d'</span>);
+cx.fillStyle = <span class="s">'#fff'</span>; cx.fillRect(<span class="n">0</span>,<span class="n">0</span>,<span class="n">100</span>,<span class="n">100</span>);
+<span class="k">const</span> d = cx.getImageData(<span class="n">0</span>,<span class="n">0</span>,<span class="n">100</span>,<span class="n">100</span>);
+getDetPool().submit(d.data.buffer, <span class="n">100</span>, <span class="n">100</span>)
+  .then(r =&gt; console.log(<span class="s">'OK，返回'</span>, r.length, <span class="s">'个'</span>))
+  .catch(e =&gt; console.error(<span class="s">'失败：'</span>, e));</code></pre>
+        预期：打印 <code>OK，返回 0 个</code>。若 5 秒无响应 → Worker 池挂了。
+      </div>
+    </details>
+
+    <details>
+      <summary>③ 验证 CRC32 实现正确</summary>
+      <div class="ans">
+<pre><code><span class="c">// 标准测试向量："123456789" 的 CRC32 = 0xCBF43926</span>
+<span class="k">const</span> b = <span class="k">new</span> TextEncoder().encode(<span class="s">'123456789'</span>);
+console.log(crc32(b).toString(<span class="n">16</span>).toUpperCase());
+<span class="c">// 预期：CBF43926</span></code></pre>
+        不对的话，ZIP 会损坏或解压报 CRC 错误。
+      </div>
+    </details>
+
+    <details>
+      <summary>④ 检查结果数组的一致性</summary>
+      <div class="ans">
+<pre><code>console.log(<span class="s">'结果数'</span>, results.length);
+console.log(<span class="s">'页码单调'</span>, results.every((r,i) =&gt; i===<span class="n">0</span> || r.page &gt;= results[i-<span class="n">1</span>].page));
+console.log(<span class="s">'名字唯一'</span>, <span class="k">new</span> Set(results.map(r =&gt; r.name)).size === results.length);
+<span class="c">// 名字唯一性在导出阶段才会自动避让，此处 false 属正常</span></code></pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>⑤ 验证 ZIP 结构完整性</summary>
+      <div class="ans">
+<pre><code><span class="c">// 导出后在 DevTools 里检查下载的 blob</span>
+<span class="c">// 最可靠的方法：解压后看文件数是否等于 results.length</span>
+<span class="c">// 快速自检：读末尾 22 字节确认 EOCD 签名</span>
+<span class="k">async function</span> checkZip(blob){
+  <span class="k">const</span> tail = <span class="k">new</span> Uint8Array(<span class="k">await</span> blob.slice(-<span class="n">22</span>).arrayBuffer());
+  <span class="k">const</span> dv = <span class="k">new</span> DataView(tail.buffer);
+  console.log(<span class="s">'EOCD 签名'</span>, dv.getUint32(<span class="n">0</span>, <span class="k">true</span>).toString(<span class="n">16</span>));  <span class="c">// 预期 6054b50</span>
+  console.log(<span class="s">'文件数'</span>, dv.getUint16(<span class="n">10</span>, <span class="k">true</span>));
+}</code></pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>⑥ 检查是否残留外链</summary>
+      <div class="ans">
+        DevTools → Network 面板 → 清空 → 完整跑一遍。<strong>除了页面本身，不应有任何请求。</strong><br>
+        或直接在 Console 里：
+<pre><code><span class="c">// 统计源码中出现 http(s) 的次数（含 license 注释，需人工判断）</span>
+(document.documentElement.outerHTML.match(/https?:\/\//g) || []).length;</code></pre>
+      </div>
+    </details>
+
+    <h3>常见故障速查</h3>
+    <table>
+      <thead><tr><th>现象</th><th>最可能的原因</th><th>排查</th></tr></thead>
+      <tbody>
+        <tr><td>检测永远返回 0</td><td><code>WORKER_SRC</code> 模板字符串被破坏</td><td>看 Console 有无 <code>Worker 检测失败</code>；检查新加的 Worker 代码里有无裸反引号/<code>${</code></td></tr>
+        <tr><td>提示"环境不支持 Web Worker"</td><td>file:// 下 Worker 被策略禁用</td><td>换 http://localhost 或换浏览器</td></tr>
+        <tr><td>进度条卡住不动</td><td>Worker 崩溃后未替补（S2 回归）</td><td>看 Console 有无 <code>检测 Worker 异常终止</code></td></tr>
+        <tr><td>编号顺序乱</td><td>合并阶段被改动</td><td>检查是否绕过了 <code>pageResults[p]</code> 两阶段</td></tr>
+        <tr><td>中文文件名丢失</td><td>ZIP flags 不是 <code>0x0800</code></td><td>检查 <code>FLAGS</code> 常量</td></tr>
+        <tr><td>导出图片模糊</td><td>检测图被误当导出源</td><td>检查 <code>cropQRSquare</code> 第一个参数是原始 <code>canvas</code> 而非 <code>detCanvas</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 18 -->
+  <section id="c18">
+    <h2><span class="num">18</span>版本与联系</h2>
+
+    <h3>版本历史</h3>
+    <table>
+      <thead><tr><th>版本</th><th>关键变化</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>1.1</strong>（当前）</td>
+          <td>
+            · 移除主线程回退检测死代码，Worker 不可用时显式报错（S1）<br>
+            · Worker 崩溃自愈 + 队列消化，消除永久悬挂（S2）<br>
+            · 中文文件名支持（M2，ZIP UTF-8 flag）<br>
+            · 3x 救援分支，消除"1x/2x 全漏则永不补"盲区（M3）<br>
+            · 删除索引错位、导出按钮状态、旧结果残留、失败页披露（O1–O4）<br>
+            · ZIP 打包零拷贝，消除 JPG 二次复制（O5）<br>
+            · 拖拽遮罩残留修复（M1）
+          </td>
+        </tr>
+        <tr><td>1.0</td><td>首版：单文件离线、码眼定位裁切、三尺度检测、多核 Worker 池、自实现 ZIP</td></tr>
+      </tbody>
+    </table>
+
+    <h3>已知限制</h3>
+    <ul>
+      <li>只识别 QR Code，不支持一维条形码与其它码制。</li>
+      <li>单次只能处理一个 PDF。</li>
+      <li>加密 PDF 无法处理。</li>
+      <li>ZIP 未实现 Zip64（&gt;65535 文件或 &gt;4GB 不适用，实际不会触发）。</li>
+      <li>Safari 未充分验证。</li>
+      <li>不消费解码内容（<code>qr.data</code> 已获取但未暴露）。</li>
+    </ul>
+
+    <h3>技术栈来源</h3>
+    <table>
+      <thead><tr><th>组件</th><th>版本</th><th>许可</th></tr></thead>
+      <tbody>
+        <tr><td>pdfjs-dist</td><td>3.11.174</td><td>Apache-2.0（Mozilla Foundation）</td></tr>
+        <tr><td>zxing-wasm</td><td>3.0.2</td><td>MIT（基于 ZXing）</td></tr>
+      </tbody>
+    </table>
+
+    <h3>作者与联系</h3>
+    <table>
+      <thead><tr><th>项目</th><th>信息</th></tr></thead>
+      <tbody>
+        <tr><td>作者</td><td>Yulai</td></tr>
+        <tr><td>版本</td><td>v1.1</td></tr>
+        <tr><td>邮箱</td><td><a href="mailto:liyulai@qq.com">liyulai@qq.com</a></td></tr>
+        <tr><td>GitHub</td><td><a href="https://github.com/Locallabstide" target="_blank" rel="noopener">https://github.com/Locallabstide</a></td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip">
+      <span class="t">💡 反馈建议</span>
+      遇到识别不准的 PDF、或者想扩展功能，欢迎带样例（脱敏后）发邮件。识别率问题如果能提供原始 PDF，定位效率会高很多——检测日志里的 <code>found</code> 和 <code>detSize</code> 两个值特别有用。
+    </div>
+
+    <h3>维护提示</h3>
+    <div class="danger">
+      <span class="t">⛔ 改动前必读</span>
+      <ol style="margin:6px 0 0">
+        <li>改 <code>WORKER_SRC</code> 后必须跑回归（40/40、20/20）。</li>
+        <li>改裁切逻辑时确认用的是原始 canvas 而非检测 canvas。</li>
+        <li>改并行/合并逻辑时确认编号顺序仍按页码。</li>
+        <li>改 ZIP 时确认 <code>FLAGS = 0x0800</code> 未被覆盖。</li>
+        <li>发布前跑第 15 章的 6 项清单。</li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="page-footer">
+    PDF 二维码提取工具 <span class="ver">Ver 1.1</span> &nbsp;·&nbsp; Powered by Yulai @2026 &nbsp;·&nbsp; E-mail：<a href="mailto:liyulai@qq.com">liyulai@qq.com</a><br>
+    <span class="gh">GitHub：<a href="https://github.com/Locallabstide" target="_blank" rel="noopener">https://github.com/Locallabstide</a></span>
+  </div>
+
+</div>
+</body>
+</html>

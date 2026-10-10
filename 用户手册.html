@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PDF 二维码提取工具 · 用户手册</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --panel:#fff; --line:#e3e8ef; --text:#1f2933; --sub:#6b7685;
+    --accent:#2f6fed; --accent-soft:#eef4ff; --ok:#1f9d55; --ok-soft:#eaf7ef;
+    --warn:#d98300; --warn-soft:#fff8eb; --danger:#e5484d; --danger-soft:#fdecec;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+    background:var(--bg); color:var(--text); font-size:15px; line-height:1.85;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px 60px}
+
+  /* 顶部 */
+  .hero{
+    background:linear-gradient(180deg,#2f6fed 0%,#2456bd 100%);
+    color:#fff; padding:44px 20px 38px; text-align:center; margin-bottom:28px;
+  }
+  .hero h1{font-size:27px;margin:0 0 10px;font-weight:600;letter-spacing:.5px}
+  .hero .sub{font-size:14px;opacity:.9;margin:0}
+  .hero .chips{margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .hero .chip{
+    background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.28);
+    padding:4px 12px; border-radius:20px; font-size:12.5px;
+  }
+
+  /* 目录 */
+  .toc{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 22px; margin-bottom:28px;
+  }
+  .toc h2{font-size:15px;margin:0 0 12px;color:var(--sub);font-weight:600;letter-spacing:.5px}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:32px}
+  .toc li{margin:4px 0;font-size:14px}
+  .toc a{color:var(--accent);text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+  @media(max-width:640px){ .toc ol{columns:1} }
+
+  /* 章节 */
+  section{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px 30px; margin-bottom:22px;
+  }
+  section > h2{
+    font-size:20px; margin:0 0 18px; padding-bottom:12px;
+    border-bottom:2px solid var(--accent-soft); font-weight:600;
+  }
+  section > h2 .num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:28px; height:28px; border-radius:8px; background:var(--accent); color:#fff;
+    font-size:14px; margin-right:10px; vertical-align:2px;
+  }
+  h3{font-size:16px;margin:26px 0 10px;font-weight:600;color:#243b53}
+  h3:first-of-type{margin-top:6px}
+  h4{font-size:14.5px;margin:20px 0 8px;font-weight:600;color:#334e68}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0;padding-left:26px}
+  li{margin:6px 0}
+  code{
+    background:#eef2f8; border:1px solid #dde4ee; border-radius:5px;
+    padding:1px 6px; font-family:Consolas,"Courier New",monospace; font-size:13.5px;
+    color:#2257c4;
+  }
+  b,strong{color:#1a2b3c}
+
+  /* 提示块 */
+  .tip,.warn,.danger,.ok{
+    border-radius:10px; padding:13px 16px; margin:14px 0; font-size:14px; border:1px solid;
+  }
+  .tip{background:var(--accent-soft); border-color:#cfe0ff; }
+  .ok{background:var(--ok-soft); border-color:#c6ebd7;}
+  .warn{background:var(--warn-soft); border-color:#f5e0b8;}
+  .danger{background:var(--danger-soft); border-color:#f7cdd0;}
+  .tip .t,.warn .t,.danger .t,.ok .t{font-weight:600;margin-right:6px}
+
+  /* 步骤卡片 */
+  .steps{counter-reset:step; margin:18px 0}
+  .step{
+    position:relative; padding:14px 18px 14px 58px; margin:12px 0;
+    background:#fafbfd; border:1px solid var(--line); border-radius:10px;
+  }
+  .step::before{
+    counter-increment:step; content:counter(step);
+    position:absolute; left:16px; top:14px;
+    width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:13.5px; font-weight:600;
+  }
+  .step .st{font-weight:600;display:block;margin-bottom:3px}
+  .step .sd{font-size:14px;color:#425466}
+
+  /* 表格 */
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:14px}
+  th,td{border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top}
+  th{background:#f2f6fc; font-weight:600; color:#243b53; white-space:nowrap}
+  tbody tr:nth-child(even){background:#fafbfd}
+  td code{font-size:13px}
+
+  /* 快速上手大卡 */
+  .quick{
+    background:linear-gradient(135deg,#f0f7ff 0%,#eaf2ff 100%);
+    border:1px solid #cfe0ff; border-radius:var(--radius); padding:22px 26px; margin-bottom:22px;
+  }
+  .quick h2{font-size:19px;margin:0 0 6px;padding:0;border:0}
+  .quick .lead{color:#425466;font-size:14px;margin:0 0 16px}
+  .quick .five{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .quick .f{
+    background:#fff;border:1px solid #dbe7fb;border-radius:10px;padding:12px 14px;
+  }
+  .quick .f .n{font-size:12px;color:var(--accent);font-weight:700;letter-spacing:1px}
+  .quick .f .x{font-size:14px;font-weight:600;margin:4px 0 3px}
+  .quick .f .d{font-size:12.5px;color:var(--sub);line-height:1.6}
+
+  /* FAQ */
+  details{
+    border:1px solid var(--line); border-radius:10px; margin:10px 0;
+    background:#fafbfd; overflow:hidden;
+  }
+  details summary{
+    padding:12px 16px; cursor:pointer; font-weight:600; font-size:14.5px;
+    list-style:none; position:relative; padding-right:40px;
+  }
+  details summary::-webkit-details-marker{display:none}
+  details summary::after{
+    content:"＋"; position:absolute; right:16px; top:12px; color:var(--accent); font-weight:700;
+  }
+  details[open] summary::after{content:"－"}
+  details summary:hover{background:#f2f6fc}
+  details .ans{padding:0 16px 14px; font-size:14px; color:#425466; border-top:1px dashed var(--line); padding-top:12px}
+
+  /* 术语 */
+  .dict dt{font-weight:600;margin-top:14px;color:#2257c4}
+  .dict dd{margin:4px 0 0 0;padding-left:0;font-size:14px;color:#425466}
+
+  /* 页脚 */
+  .page-footer{
+    margin-top:34px; padding:20px 10px 6px; border-top:1px solid var(--line);
+    text-align:center; font-size:12.5px; color:var(--sub); line-height:2;
+  }
+  .page-footer .ver{color:var(--accent);font-weight:600}
+  .page-footer a{color:var(--accent);text-decoration:none}
+  .page-footer a:hover{text-decoration:underline}
+  .page-footer .gh{display:inline-block;margin-top:4px}
+
+  @media(max-width:640px){
+    body{font-size:14.5px}
+    section{padding:20px 18px}
+    .hero{padding:32px 16px 28px}
+    .hero h1{font-size:22px}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>PDF 二维码提取工具 · 用户手册</h1>
+  <p class="sub">把 PDF 里所有二维码，自动裁成一张张正方形图片</p>
+  <div class="chips">
+    <span class="chip">纯本地处理</span>
+    <span class="chip">无需联网</span>
+    <span class="chip">批量自动</span>
+    <span class="chip">Ver 1.1</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="toc">
+    <h2>目录</h2>
+    <ol>
+      <li><a href="#c1">这工具是干嘛的</a></li>
+      <li><a href="#c2">30 秒快速上手</a></li>
+      <li><a href="#c3">界面长什么样</a></li>
+      <li><a href="#c4">打开文件的两种方式</a></li>
+      <li><a href="#c5">三个参数怎么填</a></li>
+      <li><a href="#c6">看懂结果列表</a></li>
+      <li><a href="#c7">改名字和删掉不要的</a></li>
+      <li><a href="#c8">导出 ZIP 压缩包</a></li>
+      <li><a href="#c9">能认多小的二维码</a></li>
+      <li><a href="#c10">常见问题</a></li>
+      <li><a href="#c11">术语小词典</a></li>
+    </ol>
+  </div>
+
+  <!-- 快速上手 -->
+  <div class="quick" id="quick">
+    <h2>⚡ 30 秒快速上手</h2>
+    <p class="lead">如果你只想赶紧把活干完，照着下面五步做就行。想搞明白原理，往后翻。</p>
+    <div class="five">
+      <div class="f"><div class="n">STEP 1</div><div class="x">双击打开</div><div class="d">双击 <code>pdf-qr-cropper-offline.html</code>，用 Chrome 或 Edge 打开。</div></div>
+      <div class="f"><div class="n">STEP 2</div><div class="x">丢进 PDF</div><div class="d">把 PDF 文件直接拖到网页窗口里，松手即可。</div></div>
+      <div class="f"><div class="n">STEP 3</div><div class="x">点开始</div><div class="d">参数不用动，直接点蓝色的「开始检测并裁切」。</div></div>
+      <div class="f"><div class="n">STEP 4</div><div class="x">等进度条</div><div class="d">右侧出现一张张二维码小图就说明成功了。</div></div>
+      <div class="f"><div class="n">STEP 5</div><div class="x">导出</div><div class="d">点「打包导出 ZIP」，浏览器自动下载压缩包。</div></div>
+    </div>
+  </div>
+
+  <!-- 1 -->
+  <section id="c1">
+    <h2><span class="num">1</span>这工具是干嘛的</h2>
+
+    <p>假设你手里有一份 PDF，里面排了 100 个二维码——可能是桌贴、可能是优惠券、可能是设备标签。现在你需要把这 100 个二维码<strong>一个个单独抠出来</strong>，变成 100 张图片。</p>
+
+    <p>如果手动干，你得：截图 → 调整大小 → 裁剪成正方形 → 一个个命名 → 打包压缩。100 个，一晚上就没了。</p>
+
+    <p>这个工具就是干这件事的机器人：<strong>你把 PDF 丢进去，它自动找出里面所有的二维码，按正方形裁好，打包成一个 ZIP 给你下载。</strong>整个过程几秒钟。</p>
+
+    <h3>它能做到什么</h3>
+    <table>
+      <thead><tr><th>能力</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>自动找码</td><td>不需要你标位置，它自己扫描每一页，找出所有二维码的坐标</td></tr>
+        <tr><td>精准裁切</td><td>按二维码的"码眼"（三个角上的小方块）定位，裁成正方形，不歪不斜</td></tr>
+        <tr><td>自动编号</td><td>按页码顺序 + 页内位置顺序，从 <code>001.jpg</code> 开始连续编号</td></tr>
+        <tr><td>手动改名</td><td>编号只是一开始，你可随时改成自己想要的任何名字</td></tr>
+        <tr><td>批量打包</td><td>所有图片压成一个 ZIP，一次下载搞定</td></tr>
+        <tr><td>完全离线</td><td>识别引擎就装在这个 HTML 文件里，拔网线也能用</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip">
+      <span class="t">💡 你的文件很安全</span>
+      所有处理都在你自己的浏览器里完成，PDF 和图片<strong>不会上传到任何服务器</strong>。不信的话，把网线拔了再试，功能一模一样。
+    </div>
+
+    <h3>它做不到什么</h3>
+    <p>说清楚边界，免得你期待落空：</p>
+    <ul>
+      <li><strong>不能识别二维码里的内容</strong>——什么"扫出来是 www.xxx.com"这种，它不管。它只负责"抠图"。</li>
+      <li><strong>不能读 PDF 里的普通文字</strong>——它没有 OCR 文字识别功能，只认二维码的码眼图案。</li>
+      <li><strong>不能认出手写、模糊、撕裂的二维码</strong>——图案太糊的话，机器也认不出来。</li>
+      <li><strong>不支持条形码</strong>——只处理二维码（QR Code），一维条形码会忽略。</li>
+    </ul>
+  </section>
+
+  <!-- 2 -->
+  <section id="c2">
+    <h2><span class="num">2</span>30 秒快速上手</h2>
+
+    <p>完整走一遍，从拿到文件到拿到成品。</p>
+
+    <div class="steps">
+      <div class="step">
+        <span class="st">打开工具</span>
+        <span class="sd">找到 <code>pdf-qr-cropper-offline.html</code> 这个文件，双击它。<br>
+        电脑会问你"用什么程序打开"，选 <strong>Chrome</strong> 或 <strong>Edge</strong>（就是平时上网那个浏览器）。<br>
+        打开后你会看到一个蓝白配色的页面，左边一列设置，右边空着。</span>
+      </div>
+
+      <div class="step">
+        <span class="st">把 PDF 丢进去</span>
+        <span class="sd">两种方法，任选一种：
+          <ul style="margin:6px 0 0">
+            <li>点左侧「上传 PDF 文件」那个框，在弹出的窗口里选中你的 PDF。</li>
+            <li>或者更爽：直接从文件夹里把 PDF 文件<strong>拖到网页上</strong>，松手就行。整个窗口都是接收区。</li>
+          </ul>
+        </span>
+      </div>
+
+      <div class="step">
+        <span class="st">清点页数</span>
+        <span class="sd">加载成功后，右下角会弹出一个小提示，写着「已加载 PDF：xxx.pdf，共 12 页」。<br>
+        <strong>先核对一下页数对不对</strong>，别拿到一半才发现加载错了文件。</span>
+      </div>
+
+      <div class="step">
+        <span class="st">点「开始检测并裁切」</span>
+        <span class="sd">参数一个都不用改，直接用默认值。<br>
+        点击蓝色大按钮，进度条开始动，文字会显示「正在处理… 已完成 3/12 页」。</span>
+      </div>
+
+      <div class="step">
+        <span class="st">等待并查看结果</span>
+        <span class="sd">页数多的话可能要等十几秒到一两分钟（取决于电脑和页数）。<br>
+        结束后，右边区域会铺满一张张二维码缩略图，左上角显示「共 XX 个二维码」。</span>
+      </div>
+
+      <div class="step">
+        <span class="st">（可选）改名 / 删多余的</span>
+        <span class="sd">每个小图下面有个输入框，里面的文字就是文件名，直接改就行。<br>
+        不想要的那张，点它下面的「删除」。</span>
+      </div>
+
+      <div class="step">
+        <span class="st">点「打包导出 ZIP」</span>
+        <span class="sd">浏览器会开始下载一个叫 <code>你的PDF名字-crops.zip</code> 的压缩包。<br>
+        解压开，里面就是一张张 JPG 图片。完事。</span>
+      </div>
+    </div>
+
+    <div class="ok">
+      <span class="t">✅ 全流程就这 7 步</span>
+      实际上第 3、6 步是"检查/可选"，真正必做的只有：<strong>打开 → 拖 PDF → 点开始 → 点导出</strong>，四步。
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section id="c3">
+    <h2><span class="num">3</span>界面长什么样</h2>
+
+    <p>整个页面就分三块，认得清这三块你就不会迷路。</p>
+
+    <h3>① 顶部横条</h3>
+    <p>写着工具名「PDF 二维码裁切工具」，旁边一个小标签「单文件 · 本地处理 · 码眼定位」——这是在提醒你：<strong>所有运算都在这一个文件里，在你自己电脑上完成</strong>。</p>
+
+    <h3>② 左侧设置栏（宽度固定）</h3>
+    <p>从上到下五张卡片，就是操作的完整顺序：</p>
+    <table>
+      <thead><tr><th>卡片</th><th>里面有什么</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1. 选择 PDF</strong></td><td>一个上传框。点它选文件，或者直接把文件拖到整个窗口。</td></tr>
+        <tr><td><strong>2. 处理参数</strong></td><td>渲染 DPI、起始编号、并发页数，三个可调项（默认值都是最优的，不用动）。</td></tr>
+        <tr><td><strong>3. 开始处理</strong></td><td>「开始检测并裁切」按钮。没选 PDF 之前它是灰的，点不动。</td></tr>
+        <tr><td><strong>4. 导出</strong></td><td>「打包导出 ZIP」按钮。没结果之前也是灰的。</td></tr>
+        <tr><td><strong>说明</strong></td><td>简短的技术说明，看不懂可以跳过。</td></tr>
+      </tbody>
+    </table>
+
+    <h3>③ 右侧主区域（占满剩余宽度）</h3>
+    <p>刚开始只有一句话：「请选择 PDF 文件并开始处理」。</p>
+    <p>处理完之后，这里会变成一片网格，每个格子里是一张二维码缩略图 + 页码标签 + 文件名输入框 + 删除按钮。左上角还有一行状态字和一个「清空结果」按钮。</p>
+
+    <h3>④ 右下角小提示（Toast）</h3>
+    <p>每次操作完，屏幕右下角会飘出来一个小方块，3.5 秒后自动消失。它有三种颜色：</p>
+    <ul>
+      <li><strong>蓝色左边框</strong>——普通信息</li>
+      <li><strong style="color:#1f9d55">绿色左边框</strong>——成功了，比如「已加载 PDF」</li>
+      <li><strong style="color:#d98300">橙色左边框</strong>——警告，比如「请拖入 PDF 文件」</li>
+      <li><strong style="color:#e5484d">红色左边框</strong>——出错了，比如「PDF 加载失败」</li>
+    </ul>
+    <div class="tip"><span class="t">💡 小技巧</span>提示飘走了没看清？没关系，同一个信息在左侧进度条下面、右侧状态栏里通常还有一份。</div>
+  </section>
+
+  <!-- 4 -->
+  <section id="c4">
+    <h2><span class="num">4</span>打开文件的两种方式</h2>
+
+    <h3>方式一：点击选择（传统方式）</h3>
+    <p>点左侧「上传 PDF 文件」下面的方框 → 弹出系统的文件选择窗口 → 找到你的 PDF → 双击或点"打开"。</p>
+    <p>这个框只接受 <code>.pdf</code> 后缀的文件，其它格式选不到（或者选了会提示你）。</p>
+
+    <h3>方式二：拖拽（推荐，快得多）</h3>
+    <p>把 PDF 文件从文件夹里按住不放，拖到浏览器窗口上，<strong>整个窗口任意位置都行</strong>——不用对准那个上传框。</p>
+    <p>拖进来的时候，整个页面会蒙上一层半透明的黑色，中间弹出一个白框写着「松开鼠标，加载 PDF」。这时候松手，文件就开始加载了。</p>
+
+    <div class="tip">
+      <span class="t">💡 为什么推荐拖拽</span>
+      不用点、不用找、不用翻文件夹层级。PDF 就在桌面上？直接拖过来，两秒钟的事。
+    </div>
+
+    <h3>换一个 PDF 会怎样</h3>
+    <p>放心换。加载新 PDF 的时候，<strong>上一次的处理结果会自动清空</strong>，包括右侧那一堆缩略图和导出的数据。不会混淆，也不会残留旧的二维码。</p>
+
+    <div class="warn">
+      <span class="t">⚠️ 一次只能处理一个 PDF</span>
+      这个工具是"一进一出"的：一次加载一个 PDF，处理完导出，再换下一个。想批量处理多个 PDF，请分多次操作。
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section id="c5">
+    <h2><span class="num">5</span>三个参数怎么填</h2>
+
+    <p>左侧「2. 处理参数」卡片里有三个可调项。<strong>默认值已经调到最优，90% 的情况你什么都不用改。</strong>但如果你想搞清楚每个参数在干什么，往下看。</p>
+
+    <h3>① 渲染 DPI（决定识别和裁切清晰度）</h3>
+    <p>三选一的下拉框：</p>
+    <table>
+      <thead><tr><th>选项</th><th>什么意思</th><th>什么时候选</th></tr></thead>
+      <tbody>
+        <tr><td><code>200 DPI（快）</code></td><td>把 PDF 页面渲染成较低分辨率的图，处理快</td><td>页数特别多、想快点出结果、二维码本身很清楚</td></tr>
+        <tr><td><strong><code>300 DPI（标准）</code></strong></td><td>标准印刷级清晰度（默认）</td><td><strong>绝大多数情况</strong>，不用改</td></tr>
+        <tr><td><code>400 DPI（极精）</code></td><td>更高分辨率，像素更多</td><td>二维码很小、印得很密，300 认不出来时试试</td></tr>
+      </tbody>
+    </table>
+    <p>简单说：<strong>DPI 越高，抠出来的图越清晰、越容易认出来，但处理越慢、越吃内存。</strong></p>
+
+    <h3>② 起始编号</h3>
+    <p>一个数字输入框，默认 <code>1</code>。</p>
+    <p>它决定第一个二维码叫什么名字。填 1，就是 <code>001.jpg</code>、<code>002.jpg</code>…；填 100，就是 <code>100.jpg</code>、<code>101.jpg</code>…</p>
+    <p><strong>为什么要改？</strong>比如你要给三份 PDF 提取，想让编号连起来不重复：第一份用 1 开始（001–050），第二份就从 51 开始（051–100），第三份从 101 开始。这样合起来一套编号，整整齐齐。</p>
+
+    <h3>③ 并发页数</h3>
+    <p>下拉框可选 <code>1 / 2 / 3 / 4 / 6 / 8</code>，默认<strong>按你电脑的 CPU 核数自动设定</strong>（一般 3 或 4）。</p>
+    <p>意思是"同时处理几页"。设成 3，就是三页一起开工，谁先做完谁接着领下一页。</p>
+    <table>
+      <thead><tr><th>设置</th><th>效果</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1（串行）</strong></td><td>一页一页老老实实做。最慢，但最省内存，老电脑选这个不容易卡</td></tr>
+        <tr><td><strong>3（推荐）</strong></td><td>速度和内存的平衡点</td></tr>
+        <tr><td><strong>6 / 8</strong></td><td>多核电脑的满速模式，榨干 CPU。内存小的电脑可能卡顿</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip">
+      <span class="t">💡 一个容易误解的点</span>
+      这里的"并发"只管<strong>页面渲染</strong>。真正耗时间的"找二维码"环节，工具会自动按你 CPU 的核数另外开一批线程并行跑，不受这个选项影响。所以选 3 已经能跑得飞快了。
+    </div>
+
+    <div class="warn">
+      <span class="t">⚠️ 电脑卡住了怎么办</span>
+      如果处理时浏览器明显卡顿、风扇狂转，把「并发页数」降到 2 或 1，再把「渲染 DPI」降到 200，重来一次。
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="c6">
+    <h2><span class="num">6</span>看懂结果列表</h2>
+
+    <p>处理完成后，右侧会变成一片网格。每个格子里是这么一套东西，从上到下：</p>
+
+    <table>
+      <thead><tr><th>元素</th><th>位置</th><th>作用</th></tr></thead>
+      <tbody>
+        <tr><td><strong>缩略图</strong></td><td>卡片上部</td><td>抠出来的二维码长什么样。正方形、白底，画质比最终导出的稍微压缩了一点（为了显示快）</td></tr>
+        <tr><td><code>P3</code></td><td>缩略图下方左侧标签</td><td>这个码在第 3 页</td></tr>
+        <tr><td><code>#5</code></td><td>缩略图下方右侧标签</td><td>它是这一页里第 5 个被找到的码</td></tr>
+        <tr><td><strong>文件名输入框</strong></td><td>标签下方</td><td>显示当前文件名（不含 .jpg），可以直接点进去改</td></tr>
+        <tr><td><strong>删除</strong>按钮</td><td>卡片最下面</td><td>不要这张，删掉</td></tr>
+      </tbody>
+    </table>
+
+    <h3>状态栏那一行字</h3>
+    <p>网格左上角会显示：「共 <strong>42</strong> 个二维码；命名按页码 + 页内码眼顺序从起始编号连续编号，可手动修改文件名后导出。」</p>
+    <p>这个数字是<strong>实时的</strong>——你删掉几张，它立刻跟着变。</p>
+
+    <h3>编号顺序是怎么定的</h3>
+    <p>按"页码优先、页内从上到下从左到右"来：</p>
+    <ul>
+      <li>第 1 页的 3 个码 → <code>001</code>、<code>002</code>、<code>003</code></li>
+      <li>第 2 页的 4 个码 → <code>004</code>、<code>005</code>、<code>006</code>、<code>007</code></li>
+      <li>以此类推…</li>
+    </ul>
+    <p>页内的顺序是<strong>阅读顺序</strong>：先比垂直位置，上面的排前面；同一行的，左边的排前面。这跟你看书从左到右、从上到下的习惯是一致的，所以核对起来很直观。</p>
+
+    <div class="tip">
+      <span class="t">💡 没有识别出二维码？</span>
+      如果某个页面一个码都没找到，它就直接不贡献结果，不会弹错误。如果你发现<strong>整份 PDF 一个都没出来</strong>，先跳到第 9 章看看。
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section id="c7">
+    <h2><span class="num">7</span>改名字和删掉不要的</h2>
+
+    <h3>改名字</h3>
+    <p>直接点文件名输入框，把里面的文字改掉，然后<strong>点到别处</strong>（或者按回车），改好的名字就生效了。导出时 ZIP 里就是这个新名字。</p>
+
+    <p>关于名字的规则：</p>
+    <ul>
+      <li><strong>支持中文</strong>——写「北京店-桌贴1」完全没问题</li>
+      <li><strong>支持字母、数字、下划线、连字符</strong></li>
+      <li><strong>自动去掉非法字符</strong>—— <code>\ / : * ? " &lt; &gt; |</code> 这几个符号不能用在文件名里，你输了会被自动删掉</li>
+      <li><strong>清空会回退到编号</strong>——如果你把名字全删了，它会自动变回原来的编号（比如 <code>007</code>），不会变成空名字</li>
+      <li><strong>不用写 .jpg</strong>——后缀是自动加的，你只管写前面的部分</li>
+    </ul>
+
+    <h3>两张图重名了怎么办</h3>
+    <p>比如你把两个都改成了「桌贴」。导出的时候，工具会自动处理：第一个是 <code>桌贴.jpg</code>，第二个自动变成 <code>桌贴_2.jpg</code>。如果还有第三个重名的，就是 <code>桌贴_3.jpg</code>。</p>
+    <p><strong>不会有任何一个文件被覆盖丢掉。</strong></p>
+
+    <h3>删除</h3>
+    <p>点卡片底部的「删除」，这张就没了，网格里其它卡片原地不动，不会整体重排闪一下。</p>
+
+    <p>如果把<strong>所有</strong>卡片都删光了，右侧会回到最初的「请选择 PDF 文件并开始处理」状态，导出按钮也会变灰——因为没东西可导了。</p>
+
+    <h3>清空结果</h3>
+    <p>网格左上角有个「清空结果」按钮，一点全清，比一个个删快。PDF 文件本身还留着，你可以重新点「开始检测并裁切」再跑一遍。</p>
+
+    <div class="tip">
+      <span class="t">💡 改完名字要重新处理吗</span>
+      不用。改名字只影响导出时 ZIP 里的文件名，跟识别和裁切没半点关系。改完直接导出就行。
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section id="c8">
+    <h2><span class="num">8</span>导出 ZIP 压缩包</h2>
+
+    <p>点左下角「打包导出 ZIP」按钮，会经历两个阶段：</p>
+
+    <div class="steps">
+      <div class="step">
+        <span class="st">阶段一：生成 JPG（进度 0% → 80%）</span>
+        <span class="sd">文字显示「已生成 12/42」。这是在把每一张裁好的图真正编码成 JPG 文件。<br>
+        42 张图，大概一秒钟左右跑完。</span>
+      </div>
+      <div class="step">
+        <span class="st">阶段二：打包 ZIP（进度 80% → 100%）</span>
+        <span class="sd">文字变成「正在打包 ZIP…」。把所有 JPG 装进一个压缩包。<br>
+        完成后显示「导出完成」，右下角弹出绿色提示「ZIP 导出完成」。</span>
+      </div>
+      <div class="step">
+        <span class="st">浏览器自动下载</span>
+        <span class="sd">压缩包文件名规则：<code>你的PDF文件名-crops.zip</code>。<br>
+        比如 PDF 叫「门店桌贴.pdf」，导出的就是「门店桌贴-crops.zip」。</span>
+      </div>
+    </div>
+
+    <h3>ZIP 里面是什么</h3>
+    <p>一层，没有多余的文件夹。直接就是一张张 JPG：</p>
+    <ul>
+      <li><code>001.jpg</code>、<code>002.jpg</code>、<code>003.jpg</code>…</li>
+      <li>或者你改过的名字，比如 <code>北京店-桌贴1.jpg</code></li>
+    </ul>
+
+    <h3>图片规格</h3>
+    <table>
+      <thead><tr><th>项目</th><th>规格</th></tr></thead>
+      <tbody>
+        <tr><td>格式</td><td>JPG</td></tr>
+        <tr><td>形状</td><td>正方形（严格按二维码的码眼外接方框裁）</td></tr>
+        <tr><td>留白</td><td>码四周保留约 6% 的白色余量，不会紧贴着边</td></tr>
+        <tr><td>画质</td><td>导出用较高画质（0.92），比屏幕上看到的缩略图更清楚</td></tr>
+        <tr><td>分辨率</td><td>不强制固定值，取决于你选的 DPI 和二维码在 PDF 里的实际大小</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip">
+      <span class="t">💡 为什么不是固定分辨率</span>
+      因为这是"抠图"不是"生成"。二维码在 PDF 里本来就多大，抠出来差不多就多大——强行拉伸到固定尺寸反而会糊。要更清楚，就把 DPI 调高，源头像素多了，抠出来自然更清楚。
+    </div>
+
+    <div class="warn">
+      <span class="t">⚠️ 有些浏览器的下载拦截</span>
+      如果点了导出没反应，看一下浏览器地址栏右边有没有一个"已拦截下载"的小图标，点它允许即可。这是浏览器的安全策略，不是工具的问题。
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section id="c9">
+    <h2><span class="num">9</span>能认多小的二维码</h2>
+
+    <p>这块是这工具最用心的地方，也是它识别率高的原因。搞懂这一章，你就知道遇到问题该往哪个方向调。</p>
+
+    <h3>核心思路：先扫一遍，不够再放大</h3>
+    <p>机器找二维码，跟人用眼睛找差不多——东西太小了看不清，得放大。但"无脑放到最大"会浪费时间。所以这工具的策略是<strong>三步走，够用就停</strong>：</p>
+
+    <table>
+      <thead><tr><th>轮次</th><th>做法</th><th>什么时候继续下一步</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>第 1 轮：原尺寸</strong></td>
+          <td>用原始分辨率扫一遍</td>
+          <td>如果找到了一些码，先把它们记下来</td>
+        </tr>
+        <tr>
+          <td><strong>第 2 轮：放大 2 倍</strong></td>
+          <td>把整页图放大一倍再扫</td>
+          <td>如果这一轮<strong>找到了第 1 轮没找到的新码</strong>，说明确实有小码漏网 → 进第 3 轮</td>
+        </tr>
+        <tr>
+          <td><strong>第 3 轮：放大 3 倍</strong></td>
+          <td>再放大到三倍扫最后一遍</td>
+          <td>这轮扫完就结束了</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>另外还有一个<strong>救援机制</strong>：如果第 1 轮<strong>一个码都没找到</strong>，不管三七二十一直接跳到第 3 轮，用最高倍数再试一次。因为"整页都空"往往说明码都偏小，不救一下可能全丢了。</p>
+
+    <h3>三种情况的实际效果</h3>
+    <table>
+      <thead><tr><th>你的 PDF 情况</th><th>实际会跑几轮</th><th>结果</th></tr></thead>
+      <tbody>
+        <tr><td>二维码都挺大，清楚（比如桌贴）</td><td>只跑第 1 轮</td><td>飞快，全找出来</td></tr>
+        <tr><td>大小混着，有几个偏小</td><td>跑第 1、2、3 轮</td><td>大的小的都能覆盖</td></tr>
+        <tr><td>整页都是小码，第 1 轮全空</td><td>跑第 1 轮 → 直接跳第 3 轮</td><td>救援成功，不至于颗粒无收</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip">
+      <span class="t">💡 所以大部分文件是"一遍过"</span>
+      只有当真的存在小码的时候，才会付出多扫几遍的代价。这就是为什么页数多的文件通常也很快。
+    </div>
+
+    <h3>去重：同一个码不会被算两次</h3>
+    <p>放大扫描的时候，同一个二维码可能在好几轮里都被找到。工具会自动去重——<strong>两个码的中心点距离很近（小于码宽度的 60%）就认为是同一个</strong>，只保留一份。所以你不会拿到重复的图。</p>
+
+    <h3>识别不出来的三大原因</h3>
+    <ol>
+      <li><strong>分辨率不够</strong>——二维码在 PDF 里本身就没几个像素。→ 把「渲染 DPI」调到 400 再试。</li>
+      <li><strong>图案被破坏</strong>——有水印、被文字压住、印得糊、缺了个角。→ 这种机器也没办法，只能换源文件。</li>
+      <li><strong>不是二维码</strong>——一维条形码、或者某种冷门的码制。→ 工具只认 QR Code。</li>
+    </ol>
+  </section>
+
+  <!-- 10 -->
+  <section id="c10">
+    <h2><span class="num">10</span>常见问题</h2>
+
+    <details>
+      <summary>双击之后打开的是记事本，一屏乱码，怎么办？</summary>
+      <div class="ans">这是 Windows 把 <code>.html</code> 关联到记事本了。解决：右键这个文件 →「打开方式」→「选择其他应用」→ 选 <strong>Google Chrome</strong> 或 <strong>Microsoft Edge</strong> → 勾上「始终使用此应用打开 .html 文件」→ 确定。以后双击就直接进浏览器了。</div>
+    </details>
+
+    <details>
+      <summary>拖进来一个 PDF，提示「请拖入 PDF 文件」？</summary>
+      <div class="ans">说明你拖的不是 PDF。常见情况：拖的是 Word、Excel 或者一个文件夹；或者拖的是 PDF 的快捷方式（.lnk）而不是文件本身。检查一下后缀是不是 <code>.pdf</code>。</div>
+    </details>
+
+    <details>
+      <summary>提示「PDF 加载失败」，怎么办？</summary>
+      <div class="ans">两种可能：<br>① PDF 文件损坏或不完整 → 用别的阅读器（比如 Adobe Reader）打开试试，打不开就是文件本身问题。<br>② PDF 有加密或密码保护 → 这工具处理不了加密 PDF，请先用别的工具去掉密码。</div>
+    </details>
+
+    <details>
+      <summary>「开始检测并裁切」按钮是灰的，点不动？</summary>
+      <div class="ans">因为还没加载 PDF。先在左侧「1. 选择 PDF」里选一个文件，按钮就会亮起来。</div>
+    </details>
+
+    <details>
+      <summary>「打包导出 ZIP」按钮是灰的，点不动？</summary>
+      <div class="ans">因为结果列表是空的。要么还没点「开始检测并裁切」，要么处理后一个二维码都没找到，要么你把结果全删光了。</div>
+    </details>
+
+    <details>
+      <summary>处理完了，但一个二维码都没找到？</summary>
+      <div class="ans">按这个顺序查：<br>① 确认这份 PDF 里<strong>真的有</strong>二维码（先在阅读器里翻一遍）；<br>② 把「渲染 DPI」调到 400，重新处理；<br>③ 如果 PDF 是扫描件、本身就是很糊的图片，那基本没救了，需要找到原始的电子版 PDF。</div>
+    </details>
+
+    <details>
+      <summary>二维码找出来了，但裁得有点歪 / 边上缺一点点？</summary>
+      <div class="ans">裁切是按二维码的三个"码眼"定位的，如果二维码本身印得歪、或者在 PDF 里做了旋转变形，裁出来的方框可能就会带一点点偏。<br>另外，工具已经预留了约 6% 的白色边距来包容这种误差。如果还是不满意，把「渲染 DPI」调高重试通常会更准。</div>
+    </details>
+
+    <details>
+      <summary>处理到一半没动静了，进度条卡住？</summary>
+      <div class="ans">① 先耐心等——400 DPI 且页数多时，单页可能要好几秒；<br>② 看页面右下角有没有红色错误提示；<br>③ 如果有某一页处理失败，工具会在最后告诉你「X 页处理失败（第 A、B 页）」，其它页的结果不受影响；<br>④ 实在卡死就刷新页面重来，把「并发页数」降到 1、DPI 降到 200。</div>
+    </details>
+
+    <details>
+      <summary>能一次处理好几个 PDF 吗？</summary>
+      <div class="ans">不能，一次一个。处理完导出，再拖下一个 PDF 进去继续。想批量的话，把「起始编号」衔接起来，编号就是连续的。</div>
+    </details>
+
+    <details>
+      <summary>导出的图片能不能再清楚一点？</summary>
+      <div class="ans">把「渲染 DPI」从 300 调到 400，重新跑一遍。抠出来的图会明显更锐利。<br>注意：如果源 PDF 里的二维码本身就是低分辨率的位图，调到 400 也不会变清楚——因为源头就没有那么多信息。</div>
+    </details>
+
+    <details>
+      <summary>断网了还能用吗？</summary>
+      <div class="ans">能。识别引擎和 PDF 解析引擎都是内嵌在这个 HTML 文件里的（文件大概 4 MB 就是这么来的），不请求任何网络资源。可以当成一个离线软件放在 U 盘里到处用。</div>
+    </details>
+
+    <details>
+      <summary>处理会消耗流量吗？数据会被上传吗？</summary>
+      <div class="ans">不会。全程零网络请求。PDF 和图片都只在你的浏览器内存里流转，关掉页面就没了。<br>想验证：打开浏览器的开发者工具（F12）→ Network 面板 → 清空 → 完整跑一遍 → 看不到任何对外请求。</div>
+    </details>
+
+    <details>
+      <summary>手机上能用吗？</summary>
+      <div class="ans">不推荐。手机浏览器处理大 PDF 很容易内存不足闪退。这工具是给电脑用的（Chrome / Edge）。</div>
+    </details>
+
+    <details>
+      <summary>改完文件名，可以直接在网页里看到新名字排列吗？</summary>
+      <div class="ans">卡片位置不会重排（不会因为你改名就跳到别处），但输入框里显示的就是新名字，导出时用的也是新名字，放心。</div>
+    </details>
+  </section>
+
+  <!-- 11 -->
+  <section id="c11">
+    <h2><span class="num">11</span>术语小词典</h2>
+
+    <p>手册里出现的几个词，用大白话解释一遍。</p>
+
+    <dl class="dict">
+      <dt>DPI</dt>
+      <dd>每英寸多少个点，衡量清晰度的单位。数字越大越精细，文件也越大。印刷常用 300 DPI。这里选 300 表示"按印刷标准把 PDF 页渲染成图片"。</dd>
+
+      <dt>码眼 / 定位图案</dt>
+      <dd>二维码三个角上那三个"回"字形的大方块。它们的作用是让机器知道"这是个二维码、它有多大、它有没有被转歪"。这工具就是靠找这三个方块来定位并裁出正方形的。</dd>
+
+      <dt>渲染</dt>
+      <dd>把 PDF 这种"矢量描述"变成屏幕上/图片里一个个真实的像素点。渲染 DPI 越高，出来的图越大越清楚。</dd>
+
+      <dt>升采样 / 放大扫描</dt>
+      <dd>把图片放大后再送去识别。目的是让小二维码"变大"，机器更容易看清楚。代价是慢。</dd>
+
+      <dt>去重</dt>
+      <dd>同一个二维码在多轮扫描里被重复找到了，去掉多余的，只留一个。避免你拿到重复图片。</dd>
+
+      <dt>Web Worker / 多核并行</dt>
+      <dd>浏览器里可以同时开好几个"隐形的小帮手"一起算。这工具用它们同时处理多页、同时识别，所以比一个个排队快得多。</dd>
+
+      <dt>并发</dt>
+      <dd>同时干几件事。并发 3 就是同时处理 3 页。</dd>
+
+      <dt>ZIP</dt>
+      <dd>一种压缩包格式。把几十张图片装进一个文件，既方便下载，也能省点体积。</dd>
+
+      <dt>JPG / JPEG</dt>
+      <dd>最常见的图片格式。体积小，适合照片和这类二维码图。</dd>
+
+      <dt>Toast / 浮层提示</dt>
+      <dd>屏幕角落飘出来、几秒钟自动消失的小提示框。这里指右下角那个。</dd>
+
+      <dt>码眼定位</dt>
+      <dd>不靠猜测、不靠画框，而是直接找到二维码的定位图案来算位置。比"按固定间距切割"精准得多。</dd>
+    </dl>
+  </section>
+
+  <div class="page-footer">
+    PDF 二维码提取工具 <span class="ver">Ver 1.1</span> &nbsp;·&nbsp; Powered by Yulai @2026 &nbsp;·&nbsp; E-mail：<a href="mailto:liyulai@qq.com">liyulai@qq.com</a>
+  </div>
+
+</div>
+</body>
+</html>
